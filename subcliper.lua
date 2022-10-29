@@ -197,15 +197,13 @@ local function validate_region()
 end
 
 local function loop_add()
-	-- if Index == #Regions then
-	--     Index = Index + 1
-	--     Regions[Index] = Loop:new(nil, nil)
-	-- else Index = #Regions
-	-- end
+	local jump_to = Regions[Index].b
 	Index = #Regions + 1
 	Regions[Index] = Loop:new(nil, nil)
 	print('adding new region')
 	unset_loop()
+	mp.set_property_number("time-pos", jump_to)
+	Regions[Index].a = jump_to
 end
 
 local function file_exists(name)
@@ -214,6 +212,7 @@ local function file_exists(name)
 end
 
 local function init()
+	unset_loop()
 	local err
 	fn = mp.get_property("path"):match("(.+)%..+$") .. ".lua"
 	if file_exists(fn) == true then
