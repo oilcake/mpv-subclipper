@@ -243,9 +243,9 @@ local function next_loop()
 end
 
 local function loop_drop()
-	unset_loop()
 	remove_region()
-	next_loop()
+	Index = id_next()
+	set_loop()
 	save_loops()
 end
 
