@@ -223,6 +223,7 @@ local function init()
 		Index = 1
 		set_loop()
 		print('Hoooraaaaay')
+		mp.osd_message("loops found", 4)
 	else Regions[Index] = Loop:new(nil, nil)
     end
 end
