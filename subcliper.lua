@@ -197,13 +197,14 @@ local function validate_region()
 end
 
 local function loop_add()
+	unset_loop()
 	local jump_to = Regions[Index].b
 	Index = #Regions + 1
-	Regions[Index] = Loop:new(nil, nil)
+	local fin = mp.get_property_number("duration")
+	Regions[Index] = Loop:new(jump_to, fin)
 	print('adding new region')
-	unset_loop()
 	mp.set_property_number("time-pos", jump_to)
-	Regions[Index].a = jump_to
+	set_loop()
 end
 
 local function file_exists(name)
