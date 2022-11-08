@@ -215,7 +215,7 @@ end
 local function init()
 	unset_loop()
 	local err
-	fn = mp.get_property("path"):match("(.+)%..+$") .. ".lua"
+	fn = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
 	if file_exists(fn) == true then
 		-- load table from file
 		Regions, err = table.load(fn)
