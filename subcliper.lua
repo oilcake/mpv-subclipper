@@ -155,6 +155,7 @@ local function loop_start()
 	local loop = Regions[Index]
 	loop.a = mp.get_property_number("time-pos")
 	mp.set_property_number("ab-loop-a", loop.a)
+	save_loops()
 end
 
 local function loop_end()
@@ -225,7 +226,7 @@ local function init()
 		set_loop()
 		print('Hoooraaaaay')
 		mp.osd_message("loops found", 4)
-	else Regions[Index] = Loop:new(nil, nil)
+	else Regions[Index] = Loop:new(0, nil)
     end
 end
 
