@@ -115,6 +115,8 @@ end
 ---------------------------------------------------------------------------------------------------------------
 --actual script
 
+local looper = {}
+
 local fn = nil
 ---------------------
 --Loop definition
@@ -149,24 +151,24 @@ local function unset_loop()
 	mp.set_property_native("ab-loop-b", 'no')
 end
 
-local function save_loops()
+function looper.save_loops()
 	assert(table.save(Regions, fn) == nil )
 end
 
-local function loop_start()
+function looper.loop_start()
 	print('start of the loop, like it')
 	local loop = Regions[Index]
 	loop.a = mp.get_property_number("time-pos")
 	mp.set_property_number("ab-loop-a", loop.a)
-	save_loops()
+	looper.save_loops()
 end
 
-local function loop_end()
+function looper.loop_end()
 	local loop = Regions[Index]
 	print('don\'t like it, end loop')
 	loop.b = mp.get_property_number("time-pos")
 	set_loop()
-	save_loops()
+	looper.save_loops()
 end
 
 local function id_next()
@@ -200,7 +202,7 @@ local function validate_region()
 	end
 end
 
-local function loop_add()
+function looper.loop_add()
 	unset_loop()
 	local jump_to = Regions[Index].b
 	Index = #Regions + 1
@@ -209,15 +211,15 @@ local function loop_add()
 	print('adding new region')
 	mp.set_property_number("time-pos", jump_to)
 	set_loop()
-	save_loops()
+	looper.save_loops()
 end
 
 local function file_exists(name)
-   local f=io.open(name,"r")
-   if f~=nil then io.close(f) return true else return false end
+	local f=io.open(name,"r")
+	if f~=nil then io.close(f) return true else return false end
 end
 
-local function init()
+function looper.init()
 	unset_loop()
 	local err
 	fn = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
@@ -231,37 +233,28 @@ local function init()
 		print('Hoooraaaaay')
 		mp.osd_message("loops found", 4)
 	else Regions[Index] = Loop:new(0, nil)
-    end
+	end
 end
 
-local function prev_loop()
+function looper.prev_loop()
 	validate_region()
 	Index = id_prev()
 	set_loop()
 	print('it should actually loop now')
 end
 
-local function next_loop()
+function looper.next_loop()
 	validate_region()
 	Index = id_next()
 	set_loop()
 	print('it should actually loop now')
 end
 
-local function loop_drop()
+function looper.loop_drop()
 	remove_region()
 	Index = id_next()
 	set_loop()
-	save_loops()
+	looper.save_loops()
 end
 
-mp.register_event("file-loaded", init)
-
-mp.add_key_binding("-", "start", loop_start)
-mp.add_key_binding("=", "end", loop_end)
-mp.add_key_binding("+", "new", loop_add)
-mp.add_key_binding("_", "remove", loop_drop)
-mp.add_key_binding("g", "prev", prev_loop)
-mp.add_key_binding("h", "next", next_loop)
-
-mp.add_key_binding("§", "save", save_loops)
+return looper
