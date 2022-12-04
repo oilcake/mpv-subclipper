@@ -5,7 +5,7 @@ local saver = require("serializer")
 
 local looper = {}
 
-local fn = nil
+local loops_filename = nil
 ---------------------
 --Loop definition
 ---------------------
@@ -40,7 +40,7 @@ local function unset_loop()
 end
 
 function looper.save_loops()
-	assert(saver.save(Regions, fn) == nil )
+	assert(saver.save(Regions, loops_filename) == nil )
 end
 
 function looper.loop_start()
@@ -110,18 +110,16 @@ end
 function looper.init()
 	unset_loop()
 	local err
-	fn = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
-	if file_exists(fn) == true then
-		-- load table from file
-		Regions, err = saver.load(fn)
+	loops_filename = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
+	if file_exists(loops_filename) == false then Regions[Index] = Loop:new(0, nil); return end
+	-- load table from file
+	Regions, err = saver.load(loops_filename)
 
-		assert(err == nil)
-		Index = 1
-		set_loop()
-		print('Hoooraaaaay')
-		mp.osd_message("loops found", 4)
-	else Regions[Index] = Loop:new(0, nil)
-	end
+	assert(err == nil)
+	Index = 1
+	set_loop()
+	print('Hoooraaaaay')
+	mp.osd_message("loops found", 4)
 end
 
 function looper.prev_loop()
@@ -140,6 +138,11 @@ end
 
 function looper.loop_drop()
 	remove_region()
+	if #Regions == 0 then
+		os.remove(loops_filename)
+		looper.init()
+		return
+	end
 	Index = id_next()
 	set_loop()
 	looper.save_loops()
