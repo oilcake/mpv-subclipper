@@ -1,5 +1,6 @@
 local mp = require("mp")
 local saver = require("serializer")
+local cutter = require("cut")
 
 --actual script
 
@@ -143,6 +144,31 @@ function looper.loop_drop()
 		looper.init()
 		return
 	end
+	if not Regions[Index] then Index = id_prev() end
+	set_loop()
+	looper.save_loops()
+end
+
+function looper.save_loop_to_file()
+	local path = mp.get_property("path")
+	print("we are playing", path)
+	print("converted to", cutter.convert_path(path))
+end
+
+function looper.insert_left()
+	local loop = Regions[Index]
+	local now = mp.get_property_number("time-pos")
+	local new_left = Loop:new(loop.a, now)
+	table.insert(Regions, Index, new_left)
+	set_loop()
+	looper.save_loops()
+end
+
+function looper.insert_right()
+	local loop = Regions[Index]
+	local now = mp.get_property_number("time-pos")
+	local new_right = Loop:new(now, loop.b)
+	table.insert(Regions, Index+1, new_right)
 	Index = id_next()
 	set_loop()
 	looper.save_loops()

@@ -10,5 +10,7 @@ mp.add_key_binding("+", "new", looper.loop_add)
 mp.add_key_binding("_", "remove", looper.loop_drop)
 mp.add_key_binding("g", "prev", looper.prev_loop)
 mp.add_key_binding("h", "next", looper.next_loop)
+mp.add_key_binding("(", "right", looper.insert_right)
+mp.add_key_binding(")", "left", looper.insert_left)
 
-mp.add_key_binding("§", "save", looper.save_loops)
+mp.add_key_binding("§", "save", looper.save_loop_to_file)
