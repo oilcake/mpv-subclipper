@@ -151,8 +151,7 @@ end
 
 function looper.save_loop_to_file()
 	local path = mp.get_property("path")
-	print("we are playing", path)
-	print("converted to", cutter.convert_path(path))
+	cutter.carve_section(path, Regions[Index])
 end
 
 function looper.insert_left()
