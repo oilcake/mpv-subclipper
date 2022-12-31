@@ -28,14 +28,11 @@ function HandSaw:format_args()
 	local clip_name = string.format("%.2f-%.2f.%s", self.edges.a, self.edges.b, self.container)
 	local args = string.format(
 		"%s", ffmpeg..space..
-		self.from..space..
-		self.edges.a..space..
-		self.to..space..
-		self.edges.b..space..
-		self.input..space..
-		path.unixize(self.file)..space..
+		self.from..space..self.edges.a..space..
+		self.to..space..self.edges.b..space..
+		self.input..space..path.unixize(self.file)..space..
 		self.what_to_do..space..
-		path.unixize(self.output.."/"..clip_name)
+		path.unixize(path.join({self.output, clip_name}))
 	)
 	return args
 end
@@ -53,9 +50,10 @@ end
 function HandSaw.carve_section(path_to_file, loop)
 	local saw = HandSaw:new(path_to_file, loop)
 	local out_path, name, type = path.strip_path(path_to_file)
-	saw.output = out_path..name
+	saw.output = path.join({out_path, name})
 	create_dir_from(saw.output)
 	saw.container = type
+	print(saw:format_args())
 	saw:do_thing()
 end
 
