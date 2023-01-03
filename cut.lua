@@ -30,9 +30,9 @@ function HandSaw:format_args()
     "%s", ffmpeg..space..
     self.from..space..self.edges.a..space..
     self.to..space..self.edges.b..space..
-    self.input..space..path.unixize(self.file)..space..
+    self.input..space..path.escape_shell(self.file)..space..
     self.what_to_do..space..
-    path.unixize(path.join({self.output, clip_name}))
+    path.escape_shell(path.join({self.output, clip_name}))
   )
   return args
 end
@@ -43,7 +43,7 @@ end
 
 local function create_dir_from(name)
   if not path.isdir(name) then
-    os.execute("mkdir "..path.unixize(name))
+    os.execute("mkdir "..path.escape_shell(name))
   end
 end
 

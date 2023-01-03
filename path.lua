@@ -1,19 +1,10 @@
-local m = {}
+local M = {}
 
-local ESCAPERS = {" ", "[", "]", "(", ")", "&" }
-local escape_plan = {}
--- fills table with substitutions
-for _, escaper in pairs(ESCAPERS) do
-  escape_plan[escaper] = "\\"..escaper
+function M.escape_shell(s)
+   return(s:gsub('([ %(%)%\\%[%]\'"&])', '\\%1'))
 end
 
--- escapes all symbols to use string as shell token
-function m.unixize(path)
-  local token, _ = path:gsub(".", escape_plan)
-  return token
-end
-
-function m.strip_path(path_to_file)
+function M.strip_path(path_to_file)
   -- returns path, filename, extension
   local path = path_to_file:match('^/?(.+)/')
   local name = path_to_file:match('.+/(.+)%..+$')
@@ -21,7 +12,7 @@ function m.strip_path(path_to_file)
   return path, name, type
 end
 
-function m.join(...)
+function M.join(...)
   local slash = "/"
   local joined = ""
   for _, location in pairs(...) do
@@ -43,9 +34,9 @@ local function exists(file)
 end
 
 --- Check if a directory exists in this path
-function m.isdir(path)
+function M.isdir(path)
   -- "/" works on both Unix and Windows
   return exists(path.."/")
 end
 
-return m
+return M
