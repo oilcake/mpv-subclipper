@@ -3,6 +3,12 @@ local path = require("path")
 local ffmpeg = 'ffmpeg'
 local space = " "
 --
+local function create_dir_from(name)
+  if not path.isdir(name) then
+    os.execute("mkdir "..path.escape_shell(name))
+  end
+end
+
 --
 local HandSaw = {
   file = nil,
@@ -20,6 +26,10 @@ function HandSaw:new(file, edges)
   setmetatable({}, HandSaw)
   self.file = file
   self.edges = edges
+  local out_path, name, type = path.strip_path(file)
+  self.output = path.join({out_path, name})
+  create_dir_from(self.output)
+  self.container = type
   return self
 end
 
@@ -41,20 +51,14 @@ function HandSaw:do_thing()
   os.execute(self:format_args())
 end
 
-local function create_dir_from(name)
-  if not path.isdir(name) then
-    os.execute("mkdir "..path.escape_shell(name))
-  end
+function HandSaw:copy_clip()
+  self.what_to_do = "-c copy"
+  self:do_thing()
 end
 
 function HandSaw.carve_section(file, loop)
   local saw = HandSaw:new(file, loop)
-  local out_path, name, type = path.strip_path(file)
-  saw.output = path.join({out_path, name})
-  create_dir_from(saw.output)
-  saw.container = type
-  print(saw:format_args())
-  saw:do_thing()
+  saw:copy_clip()
 end
 
 return HandSaw

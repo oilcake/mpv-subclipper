@@ -1,6 +1,7 @@
 local mp = require("mp")
 local saver = require("serializer")
 local cutter = require("cut")
+local path = require('path')
 
 --actual script
 
@@ -103,16 +104,13 @@ function looper.loop_add()
   looper.save_loops()
 end
 
-local function file_exists(name)
-  local f=io.open(name,"r")
-  if f~=nil then io.close(f) return true else return false end
-end
-
 function looper.init()
   unset_loop()
   local err
   loops_filename = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
-  if file_exists(loops_filename) == false then Regions[Index] = Loop:new(0, nil); return end
+  if path.file_exists(loops_filename) == false then Regions[Index] = Loop:new(0, nil); return end
+  print(loops_filename)
+  print(mp.get_property('path'))
   -- load table from file
   Regions, err = saver.load(loops_filename)
 
