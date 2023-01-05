@@ -1,7 +1,11 @@
 local path = require("path")
 --
-local ffmpeg = 'ffmpeg'
-local space = " "
+local FFMPEG = 'ffmpeg'
+local SPACE = " "
+local INPUT = "-i"
+local FROM = "-ss"
+local TO = "-to"
+
 --
 local function create_dir_from(name)
   if not path.isdir(name) then
@@ -14,10 +18,7 @@ local HandSaw = {
   file = nil,
   container = nil,
   output = nil,
-  input = "-i",
   edges = nil, -- loop object
-  from = "-ss",
-  to = "-to",
   what_to_do = "-c copy"
 }
 
@@ -37,11 +38,11 @@ end
 function HandSaw:format_args()
   local clip_name = string.format("%.2f-%.2f.%s", self.edges.a, self.edges.b, self.container)
   local args = string.format(
-    "%s", ffmpeg..space..
-    self.from..space..self.edges.a..space..
-    self.to..space..self.edges.b..space..
-    self.input..space..path.escape_shell(self.file)..space..
-    self.what_to_do..space..
+    "%s", FFMPEG..SPACE..
+    FROM..SPACE..self.edges.a..SPACE..
+    TO..SPACE..self.edges.b..SPACE..
+    INPUT..SPACE..path.escape_shell(self.file)..SPACE..
+    self.what_to_do..SPACE..
     path.escape_shell(path.join({self.output, clip_name}))
   )
   return args
