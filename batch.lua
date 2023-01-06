@@ -48,6 +48,6 @@ end
 
 
 local file = '/Volumes/STUFF/[VD]/toCut/Alina Lopez & Evelyn Claire - Menage A Trois With Alina And Evelyn (11.03.2019)_720p.mp4'
-local save_to = '/Volumes/STUFF/[VD]/toCut/[OUTPUT]'
+local save_to = '/Volumes/STUFF/[VD]/[OUTPUT]'
 
 process_single(file, save_to)

@@ -109,11 +109,10 @@ function looper.init()
   unset_loop()
   local err
   loops_filename = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
-  if path.file_exists(loops_filename) == false then
+  if not path.file_exists(loops_filename) then
     -- reset loops
     Regions = {}
-    local loop = Loop:new(0, nil)
-    table.insert(Regions, loop)
+    table.insert(Regions, Loop:new(0, mp.get_property_number("duration")))
     return
   end
   print(loops_filename)
@@ -124,7 +123,7 @@ function looper.init()
   assert(err == nil)
   set_loop()
   print('Hoooraaaaay')
-  mp.osd_message("loops found", 4)
+  mp.osd_message("loops found", 1)
 end
 
 function looper.prev_loop()
