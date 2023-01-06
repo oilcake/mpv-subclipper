@@ -105,19 +105,23 @@ function looper.loop_add()
 end
 
 function looper.init()
-  -- reset loops
-  Regions = nil
+  Index = 1
   unset_loop()
   local err
   loops_filename = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
-  if path.file_exists(loops_filename) == false then Regions[Index] = Loop:new(0, nil); return end
+  if path.file_exists(loops_filename) == false then
+    -- reset loops
+    Regions = {}
+    local loop = Loop:new(0, nil)
+    table.insert(Regions, loop)
+    return
+  end
   print(loops_filename)
   print(mp.get_property('path'))
   -- load table from file
   Regions, err = saver.load(loops_filename)
 
   assert(err == nil)
-  Index = 1
   set_loop()
   print('Hoooraaaaay')
   mp.osd_message("loops found", 4)
