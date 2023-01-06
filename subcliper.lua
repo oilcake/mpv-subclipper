@@ -105,6 +105,8 @@ function looper.loop_add()
 end
 
 function looper.init()
+  -- reset loops
+  Regions = nil
   unset_loop()
   local err
   loops_filename = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
@@ -145,11 +147,6 @@ function looper.loop_drop()
   if not Regions[Index] then Index = id_prev() end
   set_loop()
   looper.save_loops()
-end
-
-function looper.save_loop_to_file()
-  local path = mp.get_property("path")
-  cutter.carve_section(path, Regions[Index])
 end
 
 function looper.insert_left()

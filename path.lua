@@ -12,17 +12,15 @@ function M.strip_path(path_to_file)
   return path, name, type
 end
 
-function M.join(...)
+function M.join(levels)
   local slash = "/"
   local joined = ""
-  for _, location in pairs(...) do
-    joined = joined..slash..tostring(location)
-  end
+  joined = table.concat(levels, slash)
   return joined
 end
 
 --- Check if a file or directory exists in this path
-local function exists(file)
+function M.exists(file)
   local ok, err, code = os.rename(file, file)
   if not ok then
     if code == 13 then
@@ -36,7 +34,7 @@ end
 --- Check if a directory exists in this path
 function M.isdir(path)
   -- "/" works on both Unix and Windows
-  return exists(path.."/")
+  return M.exists(path.."/")
 end
 
 -- accepts unescaped path
@@ -48,8 +46,10 @@ function M.listdir(dir)
   --Loop through all files
   if p == nil then return nil, error("couldn't read dir") end
   for file in p:lines() do
-    table.insert(files, file)
-    print(file)
+    if not file:match('^.+/%..+') then
+      table.insert(files, file)
+      print(file)
+    end
   end
   return files, nil
 end
@@ -57,6 +57,12 @@ end
 function M.file_exists(name)
   local f=io.open(name,"r")
   if f~=nil then io.close(f) return true else return false end
+end
+
+function M.create_dir_from(name)
+  if not M.isdir(name) then
+    os.execute("mkdir "..M.escape_shell(name))
+  end
 end
 
 return M

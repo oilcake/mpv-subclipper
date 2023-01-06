@@ -5,61 +5,59 @@ local SPACE = " "
 local INPUT = "-i"
 local FROM = "-ss"
 local TO = "-to"
+local DO_NOT_OVERWRITE = "-n"
 
---
-local function create_dir_from(name)
-  if not path.isdir(name) then
-    os.execute("mkdir "..path.escape_shell(name))
-  end
-end
-
---
 local HandSaw = {
   file = nil,
   container = nil,
   output = nil,
   edges = nil, -- loop object
+  clip_name = nil,
+  clip_path = nil, -- full path to clip
   what_to_do = "-c copy"
 }
 
 -- new instance
-function HandSaw:new(file, edges)
+function HandSaw:new(file, output_location)
   setmetatable({}, HandSaw)
   self.file = file
-  self.edges = edges
-  local out_path, name, type = path.strip_path(file)
-  self.output = path.join({out_path, name})
-  create_dir_from(self.output)
+  local file_location, name, type = path.strip_path(file)
+  self.output_dir = path.join({output_location or file_location, name})
+  if not output_location then print('saving into default location') end
+  path.create_dir_from(self.output_dir)
   self.container = type
   return self
 end
 
+function HandSaw:define_region(loop)
+  self.edges = loop
+end
+
 -- format all needed args
 function HandSaw:format_args()
-  local clip_name = string.format("%.2f-%.2f.%s", self.edges.a, self.edges.b, self.container)
+  self.clip_name = string.format("%.2f-%.2f.%s", self.edges.a, self.edges.b, self.container)
+  self.clip_path = path.join({self.output_dir, self.clip_name})
   local args = string.format(
     "%s", FFMPEG..SPACE..
     FROM..SPACE..self.edges.a..SPACE..
     TO..SPACE..self.edges.b..SPACE..
+    DO_NOT_OVERWRITE..SPACE..
     INPUT..SPACE..path.escape_shell(self.file)..SPACE..
     self.what_to_do..SPACE..
-    path.escape_shell(path.join({self.output, clip_name}))
+    path.escape_shell(self.clip_path)
   )
   return args
 end
 
 function HandSaw:do_thing()
-  os.execute(self:format_args())
+  local args = self:format_args()
+  return pcall(os.execute, args)
 end
 
 function HandSaw:copy_clip()
   self.what_to_do = "-c copy"
-  self:do_thing()
-end
-
-function HandSaw.carve_section(file, loop)
-  local saw = HandSaw:new(file, loop)
-  saw:copy_clip()
+  if not self:do_thing() then return false end
+  return true
 end
 
 return HandSaw
