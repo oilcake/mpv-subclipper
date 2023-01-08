@@ -6,10 +6,14 @@ local INPUT = "-i"
 local FROM = "-ss"
 local TO = "-to"
 local DO_NOT_OVERWRITE = "-n"
+local PRORES_TRANSCODE = "-c:v prores_ks -profile:v 0"
+local PRORES_CONTAINER = "mov"
+local MP4_CONTAINER = "mp4"
 
 local HandSaw = {
   file = nil,
-  container = nil,
+  container_from = nil,
+  container_to = nil,
   output = nil,
   edges = nil, -- loop object
   clip_name = nil,
@@ -25,7 +29,7 @@ function HandSaw:new(file, output_location)
   self.output_dir = path.join({output_location or file_location, name})
   if not output_location then print('saving into default location') end
   path.create_dir_from(self.output_dir)
-  self.container = type
+  self.container_from = type
   return self
 end
 
@@ -35,7 +39,7 @@ end
 
 -- format all needed args
 function HandSaw:format_args()
-  self.clip_name = string.format("%.2f-%.2f.%s", self.edges.a, self.edges.b, self.container)
+  self.clip_name = string.format("%.2f-%.2f.%s", self.edges.a, self.edges.b, self.container_to)
   self.clip_path = path.join({self.output_dir, self.clip_name})
   local args = string.format(
     "%s", FFMPEG..SPACE..
@@ -57,7 +61,20 @@ end
 
 function HandSaw:copy_clip()
   self.what_to_do = "-c copy"
+  self.container_to = self.container_from
   -- return value is shell's exit code
+  return self:do_thing()
+end
+
+function HandSaw:transcode_to_prores()
+  self.what_to_do = PRORES_TRANSCODE
+  self.container_to = PRORES_CONTAINER
+  return self:do_thing()
+end
+
+function HandSaw:transcode_to_mp4()
+  self.what_to_do = ""
+  self.container_to = MP4_CONTAINER
   return self:do_thing()
 end
 

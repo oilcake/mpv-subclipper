@@ -2,6 +2,25 @@ local loader = require('serializer')
 local path = require('path')
 local cutter = require('cut')
 
+local SHORT_CLIP = 11
+
+-- setup
+
+local args = {...}
+
+local folder
+local save_to
+
+for i, v in ipairs(args) do
+  if v == "--input" then
+    folder = args[i+1]
+  end
+  if v == "--output" then
+    save_to = args[i+1]
+  end
+end
+
+--helper
 local function move_to_bin(file, bin)
   local _, name, ext = path.strip_path(file)
   local full_name = name..'.'..ext
@@ -15,23 +34,34 @@ local function move_to_bin(file, bin)
 end
 
 local function process_single(file, save_to)
-  if save_to ~= nil then path.create_dir_from(save_to) end
   -- find the name of clip table file
   local clip_table = tostring(file):match("(.+)%..+$") .. ".clp"
-  assert(path.file_exists(clip_table))
+  if not path.file_exists(clip_table) then return end
+  -- create output dir if it doesn't exist
+  if save_to ~= nil then path.create_dir_from(save_to) end
   -- load table from file
   local loops, err = loader.load(clip_table)
   assert(err == nil)
 
   -- process all regions
   if loops ~= nil then
+    -- handsaw instance
     local c = cutter:new(file, save_to)
     for _, loop in pairs(loops) do
       print(loop.a, loop.b)
-      -- handsaw instance
       -- save a section
       c:define_region(loop)
-      local ok, exit, code = c:copy_clip()
+      -- check if that's a short one
+      local len = loop.b - loop.a
+      local ok, exit, code
+      if len < SHORT_CLIP then
+        ok, exit, code = c:transcode_to_prores()
+      elseif c.container_from == "mp4" then
+        ok, exit, code = c:copy_clip()
+      else
+        ok, exit, code = c:transcode_to_mp4()
+      end
+
       if code ~= 0 then
         if code == 2 and exit == "signal" then
           print("\n", ok, exit, code)
@@ -53,8 +83,13 @@ local function process_single(file, save_to)
   move_to_bin(clip_table, bin)
 end
 
-
-local file = '/Volumes/STUFF/[VD]/toCut/Alina Lopez & Evelyn Claire - Menage A Trois With Alina And Evelyn (11.03.2019)_720p.mp4'
-local save_to = '/Volumes/STUFF/[VD]/[OUTPUT]'
-
-process_single(file, save_to)
+local files, err = path.listdir(folder)
+assert(err == nil)
+if files ~= nil then
+  for _, file in pairs(files) do
+    local _, _, type = path.strip_path(file)
+    if type ~= 'clp' then
+      process_single(file, save_to)
+    end
+  end
+end
