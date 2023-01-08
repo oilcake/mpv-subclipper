@@ -31,7 +31,14 @@ local function process_single(file, save_to)
       -- handsaw instance
       -- save a section
       c:define_region(loop)
-      assert(c:copy_clip())
+      local ok, exit, code = c:copy_clip()
+      if code ~= 0 then
+        if code == 2 and exit == "signal" then
+          print("\n", ok, exit, code)
+          print(c.clip_path)
+          return
+        end
+      end
     end
     local ready
     ready, err = path.listdir(c.output_dir)

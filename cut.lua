@@ -51,13 +51,14 @@ end
 
 function HandSaw:do_thing()
   local args = self:format_args()
-  return pcall(os.execute, args)
+  local ok, exit, code = os.execute(args)
+  return ok, exit, code
 end
 
 function HandSaw:copy_clip()
   self.what_to_do = "-c copy"
-  if not self:do_thing() then return false end
-  return true
+  -- return value is shell's exit code
+  return self:do_thing()
 end
 
 return HandSaw
