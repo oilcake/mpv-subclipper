@@ -9,12 +9,16 @@ local DO_NOT_OVERWRITE = "-n"
 local PRORES_TRANSCODE = "-c:v prores_ks -profile:v 0"
 local PRORES_CONTAINER = "mov"
 local MP4_CONTAINER = "mp4"
+local FFPROBE = "ffprobe -v error -hide_banner -of default=noprint_wrappers=0 -print_format flat -select_streams v:0 -show_entries stream=width,height "
 
 local HandSaw = {
   file = nil,
   container_from = nil,
   container_to = nil,
+  width = 0,
+  height = 0,
   output = nil,
+  name_prefix = "",
   edges = nil, -- loop object
   clip_name = nil,
   clip_path = nil, -- full path to clip
@@ -26,11 +30,24 @@ function HandSaw:new(file, output_location)
   setmetatable({}, HandSaw)
   self.file = file
   local file_location, name, type = path.strip_path(file)
+  file_location = '/'..file_location
   self.output_dir = path.join({output_location or file_location, name})
   if not output_location then print('saving into default location') end
   path.create_dir_from(self.output_dir)
   self.container_from = type
+  self.name_prefix = name:gsub(" ", ".")
+  self:get_size()
   return self
+end
+
+function HandSaw:get_size()
+  local response = io.popen(FFPROBE..path.escape_shell(self.file))
+  if response ~= nil then
+    local ffprobe = response:read("*a")
+    response:close()
+    self.width = string.match(ffprobe, ".+width=(%d+)")
+    self.height = string.match(ffprobe, ".+height=(%d+)")
+  end
 end
 
 function HandSaw:define_region(loop)
@@ -39,7 +56,7 @@ end
 
 -- format all needed args
 function HandSaw:format_args()
-  self.clip_name = string.format("%.2f-%.2f.%s", self.edges.a, self.edges.b, self.container_to)
+  self.clip_name = string.format("%s-%.2f-%.2f.%s",self.name_prefix, self.edges.a, self.edges.b, self.container_to)
   self.clip_path = path.join({self.output_dir, self.clip_name})
   local args = string.format(
     "%s", FFMPEG..SPACE..
