@@ -5,6 +5,7 @@ local SPACE = " "
 local INPUT = "-i"
 local FROM = "-ss"
 local TO = "-to"
+local COPY = "-c copy"
 local DO_NOT_OVERWRITE = "-n"
 local PRORES_TRANSCODE = "-c:v prores_ks -profile:v 0"
 local PRORES_CONTAINER = "mov"
@@ -17,12 +18,14 @@ local HandSaw = {
   container_to = nil,
   width = 0,
   height = 0,
+  scaled_height = 0,
   output = nil,
   name_prefix = "",
   edges = nil, -- loop object
   clip_name = nil,
   clip_path = nil, -- full path to clip
-  what_to_do = "-c copy"
+  what_to_do = COPY,
+  downscale_options = ""
 }
 
 -- new instance
@@ -45,8 +48,8 @@ function HandSaw:get_size()
   if response ~= nil then
     local ffprobe = response:read("*a")
     response:close()
-    self.width = string.match(ffprobe, ".+width=(%d+)")
-    self.height = string.match(ffprobe, ".+height=(%d+)")
+    self.width = tonumber(string.match(ffprobe, ".+width=(%d+)"))
+    self.height = tonumber(string.match(ffprobe, ".+height=(%d+)"))
   end
 end
 
@@ -65,6 +68,7 @@ function HandSaw:format_args()
     DO_NOT_OVERWRITE..SPACE..
     INPUT..SPACE..path.escape_shell(self.file)..SPACE..
     self.what_to_do..SPACE..
+    self.downscale_options..
     path.escape_shell(self.clip_path)
   )
   return args
@@ -77,7 +81,11 @@ function HandSaw:do_thing()
 end
 
 function HandSaw:copy_clip()
-  self.what_to_do = "-c copy"
+  if self.height ~= self.scaled_height then
+    self.what_to_do = ""
+  else
+    self.what_to_do = "-c copy"
+  end
   self.container_to = self.container_from
   -- return value is shell's exit code
   return self:do_thing()
@@ -93,6 +101,11 @@ function HandSaw:transcode_to_mp4()
   self.what_to_do = ""
   self.container_to = MP4_CONTAINER
   return self:do_thing()
+end
+
+function HandSaw:set_downscaled_height_to(height)
+  self.downscale_options = string.format("-filter:v scale=-1:%d -c:a copy ", height)
+  self.scaled_height = height
 end
 
 return HandSaw
