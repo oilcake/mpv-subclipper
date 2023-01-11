@@ -48,7 +48,6 @@ function M.listdir(dir)
   for file in p:lines() do
     if not file:match('^.+/%..+') then
       table.insert(files, file)
-      print(file)
     end
   end
   return files, nil
@@ -70,12 +69,8 @@ function M.move_to_bin(file, bin)
   local _, name, ext = M.strip_path(file)
   local full_name = name..'.'..ext
   M.create_dir_from(bin)
-  print('filename = ', full_name)
-  print('bin location = ', bin)
   local trashed_file = M.join({bin, full_name})
-  print('file will be moved to = ', trashed_file)
   os.rename(file, trashed_file)
-  print('File moved My Lord!!!')
 end
 
 return M

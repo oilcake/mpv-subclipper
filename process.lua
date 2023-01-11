@@ -20,6 +20,6 @@ for i, v in ipairs(args) do
   end
 end
 
+batch:new(save_to)
 batch.to_scale = downscale
-batch.output_folder = save_to
-batch.process_folder(folder)
+batch:process_folder(folder)
