@@ -5,9 +5,11 @@ local cutter = require('cut')
 local down_size = 540
 
 local Batch = {
+  transcode_all = false,
+  hq = false,
   to_scale = false,
   output_folder = nil,
-  short_clip = 11, -- threshold after wich a clip is considered 'long'
+  short_clip = 15, -- threshold after wich a clip is considered 'long'
   log = nil
 }
 
@@ -47,8 +49,6 @@ function Batch:process_single(file)
       local len = loop.b - loop.a
       -- check if it's hiQ
       if self.to_scale and c.height > 721 then
-        io.write("\nwill be downscaled:\n")
-        -- c:set_downscaled_height_to(540)
         if len < self.short_clip then
           status = c:downscale_to_prores(down_size)
         else
@@ -58,9 +58,16 @@ function Batch:process_single(file)
         if len < self.short_clip then
           status = c:transcode_to_prores()
         elseif c.container_from == "mp4" then
-          status = c:copy_clip()
+          if self.transcode_all then
+            if self.hq then status = c:transcode_to_hq_mp4()
+            else status = c:transcode_to_mp4()
+            end
+          else status = c:copy_clip()
+          end
         else
-          status = c:transcode_to_mp4()
+          if self.hq then status = c:transcode_to_hq_mp4()
+          else status = c:transcode_to_mp4()
+          end
         end
       end
 
@@ -87,10 +94,10 @@ function Batch:process_single(file)
      io.write(string.format("\nsome files are missing:\n%s\n", c.name_prefix))
     end
   end
-  local bin = path.join({self.output_folder, '[READY]'})
+  local bin = path.join({self.output_folder, '[__READY]'})
   path.move_to_bin(file, bin)
   path.move_to_bin(clip_table, bin)
-  io.write(string.format("\nvideo and it's loop-file moved to READY\n\n"))
+  io.write(string.format("\nvideo and it's loop-file moved to bin\n\n"))
   return true
 end
 

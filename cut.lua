@@ -1,11 +1,12 @@
 local path = require("path")
 --
-local FFMPEG = 'ffmpeg -v quiet -stats'
+local FFMPEG = 'ffmpeg -hide_banner -loglevel warning -stats'
 local SPACE = " "
 local INPUT = "-i"
 local FROM = "-ss"
 local TO = "-to"
 local COPY = "-c copy"
+local CRF_COPY = "-c:v libx264 -preset slow -crf 18"
 local DO_NOT_OVERWRITE = "-n"
 local PRORES_TRANSCODE = "-c:v prores_ks -profile:v 0"
 local PRORES_CONTAINER = "mov"
@@ -93,7 +94,7 @@ function HandSaw:do_thing()
 end
 
 function HandSaw:copy_clip()
-  self.what_to_do = "-c copy"
+  self.what_to_do = COPY
   self.container_to = self.container_from
   -- return value is shell's exit code
   return self:do_thing()
@@ -102,6 +103,12 @@ end
 function HandSaw:transcode_to_prores()
   self.what_to_do = PRORES_TRANSCODE
   self.container_to = PRORES_CONTAINER
+  return self:do_thing()
+end
+
+function HandSaw:transcode_to_hq_mp4()
+  self.what_to_do = CRF_COPY
+  self.container_to = MP4_CONTAINER
   return self:do_thing()
 end
 
