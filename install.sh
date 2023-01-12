@@ -1,4 +1,4 @@
-path="~/.config/mpv/scripts/subcliper"
+path=~/.config/mpv/scripts/subcliper
 
 if [ ! -d $path ]; then
 	mkdir $path
