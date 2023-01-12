@@ -1,6 +1,5 @@
 local mp = require("mp")
 local saver = require("serializer")
-local cutter = require("cut")
 local path = require('path')
 
 --actual script

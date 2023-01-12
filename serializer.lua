@@ -6,8 +6,8 @@ local serializer = {}
 ---------------------------------------------------------------------------------------------------------------
 -- declare local variables
 --// exportstring( string )
---// returns a "Lua" portable version of the string
-local function exportstring( s )
+--// returns a Lua's portable version of the string
+local function exportstring(s)
   return string.format("%q", s)
 end
 

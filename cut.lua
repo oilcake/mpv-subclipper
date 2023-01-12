@@ -13,6 +13,7 @@ local PRORES_CONTAINER = "mov"
 local MP4_CONTAINER = "mp4"
 local FFPROBE = "ffprobe -v error -hide_banner -of default=noprint_wrappers=0 -print_format flat -select_streams v:0 -show_entries stream=width,height,codec_type "
 
+-- main object that handles clip info and runs conversion process
 local HandSaw = {
   file = nil,
   container_from = nil,
@@ -33,7 +34,6 @@ local HandSaw = {
     status = nil,
     code = nil
   }
-
 }
 
 -- new instance
@@ -54,6 +54,8 @@ function HandSaw:new(file, output_location)
 end
 
 function HandSaw:get_info()
+  -- this method gets clip dimensions from ffprobe
+  -- and checks if video file is valid
   local response = io.popen(FFPROBE..path.escape_shell(self.file))
   if response ~= nil then
     local ffprobe = response:read("*a")
@@ -68,6 +70,7 @@ function HandSaw:get_info()
 end
 
 function HandSaw:define_region(loop)
+  -- region of video to cut
   self.edges = loop
 end
 
@@ -88,15 +91,23 @@ function HandSaw:format_args()
 end
 
 function HandSaw:do_thing()
+  -- run ffmpeg and return results from the shell
   local args = self:format_args()
   self.exit_status.ok, self.exit_status.status, self.exit_status.code = os.execute(args)
   return self.exit_status
 end
 
+-- helper function
+local function downscale_string(height)
+  return string.format("-filter:v scale=-1:%d", height)
+end
+
+--[[CONVERSION METHODS]]-- 
 function HandSaw:copy_clip()
+  -- tries to save a lossless copy of video's section
   self.what_to_do = COPY
   self.container_to = self.container_from
-  -- return value is shell's exit code
+  -- returns shell's exit code
   return self:do_thing()
 end
 
@@ -116,10 +127,6 @@ function HandSaw:transcode_to_mp4()
   self.what_to_do = ""
   self.container_to = MP4_CONTAINER
   return self:do_thing()
-end
-
-local function downscale_string(height)
-  return string.format("-filter:v scale=-1:%d", height)
 end
 
 function HandSaw:downscale_to_mp4(height)

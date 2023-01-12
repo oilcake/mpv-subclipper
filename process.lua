@@ -1,14 +1,13 @@
 local batch = require('batch')
 
 -- setup
-
 local args = {...}
-
 local folder
 local save_to
 local downscale = false
 local transcode_all = false
 local hq = false
+-- parse command line arguments
 for i, v in ipairs(args) do
   if v == "--input" then
     folder = args[i+1]
@@ -27,8 +26,16 @@ for i, v in ipairs(args) do
   end
 end
 
-batch:new(save_to)
-batch.to_scale = downscale
-batch.transcode_all = transcode_all
-batch.hq = hq
-batch:process_folder(folder)
+--[[conversion]]
+
+-- create batch processor
+local b = batch:new(save_to)
+-- pass args from command line
+b.to_scale = downscale
+b.transcode_all = transcode_all
+b.hq = hq
+
+-- run process
+if b ~= nil then
+  b:process_folder(folder)
+end

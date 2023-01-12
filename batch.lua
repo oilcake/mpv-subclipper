@@ -2,14 +2,14 @@ local loader = require('serializer')
 local path = require('path')
 local cutter = require('cut')
 
-local down_size = 540
+local down_size = 720
 
 local Batch = {
   transcode_all = false,
   hq = false,
   to_scale = false,
   output_folder = nil,
-  short_clip = 15, -- threshold after wich a clip is considered 'long'
+  short_clip = 15, -- threshold after which a clip is considered 'long'
   log = nil
 }
 
@@ -95,8 +95,8 @@ function Batch:process_single(file)
     end
   end
   local bin = path.join({self.output_folder, '[__READY]'})
-  path.move_to_bin(file, bin)
-  path.move_to_bin(clip_table, bin)
+  path.move(file, bin)
+  path.move(clip_table, bin)
   io.write(string.format("\nvideo and it's loop-file moved to bin\n\n"))
   return true
 end
@@ -113,7 +113,7 @@ function Batch:process_folder(folder)
         if done == nil then
           io.write("\nstop requested\n")
           return
-        elseif done == false then io.write("\nerrors occured\n"); return
+        elseif done == false then io.write("\nerrors occurred\n"); return
         end
       end
     end

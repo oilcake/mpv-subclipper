@@ -1,7 +1,9 @@
 local M = {}
 
 function M.escape_shell(s)
-   return(s:gsub('([ %(%)%\\%[%]\'"&])', '\\%1'))
+  -- only for paths and names
+  -- do not use it if you want to pass literal "&" or "&&" to your shell
+  return(s:gsub('([ %(%)%\\%[%]\'"&])', '\\%1'))
 end
 
 function M.strip_path(path_to_file)
@@ -12,38 +14,38 @@ function M.strip_path(path_to_file)
   return path, name, type
 end
 
-function M.join(levels)
+function M.join(parts)
+  -- joins parts of the full path, substitution of python's path.join
   local slash = "/"
   local joined = ""
-  joined = table.concat(levels, slash)
+  joined = table.concat(parts, slash)
   return joined
 end
 
---- Check if a file or directory exists in this path
 function M.exists(file)
+  --- checks if a file or directory exists in this path
   local ok, err, code = os.rename(file, file)
   if not ok then
     if code == 13 then
-      -- Permission denied, but it exists
+      -- permission denied, but it exists
       return true
     end
   end
   return ok, err
 end
 
---- Check if a directory exists in this path
 function M.isdir(path)
+  -- checks if a directory exists in this path
   -- "/" works on both Unix and Windows
   return M.exists(path.."/")
 end
 
--- accepts unescaped path
 function M.listdir(dir)
-  --Open directory look for files, save data in p. 
-  --By giving '-type f' as parameter, it returns all files.     
+  -- opens directory looks for files
+  -- accepts unescaped path
   local files = {}
   local p = io.popen('find "'..dir..'" -type f')
-  --Loop through all files
+  -- loop through all files
   if p == nil then return nil, error("couldn't read dir") end
   for file in p:lines() do
     if not file:match('^.+/%..+') then
@@ -64,13 +66,13 @@ function M.create_dir_from(name)
   end
 end
 
---helper
-function M.move_to_bin(file, bin)
+function M.move(file, new_path)
+  -- moves file to new location
   local _, name, ext = M.strip_path(file)
   local full_name = name..'.'..ext
-  M.create_dir_from(bin)
-  local trashed_file = M.join({bin, full_name})
-  os.rename(file, trashed_file)
+  M.create_dir_from(new_path)
+  local moved = M.join({new_path, full_name})
+  os.rename(file, moved)
 end
 
 return M

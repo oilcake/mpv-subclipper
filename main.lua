@@ -1,4 +1,3 @@
-
 local mp = require("mp")
 local looper = require("subcliper")
 
@@ -13,4 +12,6 @@ mp.add_key_binding("h", "next", looper.next_loop)
 mp.add_key_binding("(", "right", looper.insert_right)
 mp.add_key_binding(")", "left", looper.insert_left)
 
-mp.add_key_binding("§", "save", looper.save_loop_to_file)
+--[[
+mp.add_key_binding("§", "save", add your function here)
+--]]
