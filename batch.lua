@@ -14,11 +14,12 @@ local Batch = {
 }
 
 function Batch:new(output_folder)
-  -- setmetatable({}, Batch)
+  setmetatable({}, self)
   self.output_folder = output_folder
   local logname = output_folder.."/log.txt"
   self.log = io.open(logname, "w")
   io.output(self.log)
+  return self
 end
 
 function Batch:process_single(file)
