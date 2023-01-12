@@ -150,6 +150,10 @@ function looper.insert_left()
   local now = mp.get_property_number("time-pos")
   local new_left = Loop:new(loop.a, now)
   table.insert(Regions, Index, new_left)
+  local pause = mp.get_property_native("pause")
+  if pause then
+    loop.a = now
+  end
   set_loop()
 end
 
@@ -158,6 +162,10 @@ function looper.insert_right()
   local now = mp.get_property_number("time-pos")
   local new_right = Loop:new(now, loop.b)
   table.insert(Regions, Index+1, new_right)
+  local pause = mp.get_property_native("pause")
+  if pause then
+    loop.b = now
+  end
   Index = id_next()
   set_loop()
 end

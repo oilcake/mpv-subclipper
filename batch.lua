@@ -2,12 +2,11 @@ local loader = require('serializer')
 local path = require('path')
 local cutter = require('cut')
 
-local down_size = 720
-
 local Batch = {
   transcode_all = false,
   hq = false,
   to_scale = false,
+  target_scaled_height = nil,
   output_folder = nil,
   short_clip = 15, -- threshold after which a clip is considered 'long'
   log = nil
@@ -51,9 +50,9 @@ function Batch:process_single(file)
       -- check if it's hiQ
       if self.to_scale and c.height > 721 then
         if len < self.short_clip then
-          status = c:downscale_to_prores(down_size)
+          status = c:downscale_to_prores(self.target_scaled_height)
         else
-          status = c:downscale_to_mp4(down_size)
+          status = c:downscale_to_mp4(self.target_scaled_height)
         end
       else
         if len < self.short_clip then
