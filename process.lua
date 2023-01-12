@@ -8,6 +8,8 @@ local downscale = false
 local scale_to = nil
 local transcode_all = false
 local hq = false
+local short_clip = 13
+
 -- parse command line arguments
 for i, v in ipairs(args) do
   if v == "--input" then
@@ -19,6 +21,9 @@ for i, v in ipairs(args) do
   if v == "--downscale" then
     downscale = true
     scale_to = args[i+1]
+  end
+  if v == "--short_clip" then
+    short_clip = args[i+1]
   end
   if v == "--transcode_all" then
     transcode_all = true
@@ -39,6 +44,7 @@ if downscale then
 end
 b.transcode_all = transcode_all
 b.hq = hq
+b.short_clip = short_clip
 
 -- run process
 if b ~= nil then
