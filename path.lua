@@ -3,7 +3,7 @@ local M = {}
 function M.escape_shell(s)
   -- only for paths and names
   -- do not use it if you want to pass literal "&" or "&&" to your shell
-  return(s:gsub('([ %(%)%\\%[%]\'"&])', '\\%1'))
+  return(s:gsub('([ %(%)%\\%[%]\'"&#])', '\\%1'))
 end
 
 function M.strip_path(path_to_file)

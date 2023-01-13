@@ -44,7 +44,7 @@ if downscale then
 end
 b.transcode_all = transcode_all
 b.hq = hq
-b.short_clip = short_clip
+b.short_clip = tonumber(short_clip)
 
 -- run process
 if b ~= nil then
