@@ -6,7 +6,7 @@ local folder
 local save_to
 local downscale = false
 local scale_to = nil
-local transcode_all = false
+local transcode_all = true
 local hq = false
 local short_clip = 13
 
@@ -25,8 +25,8 @@ for i, v in ipairs(args) do
   if v == "--short_clip" then
     short_clip = args[i+1]
   end
-  if v == "--transcode_all" then
-    transcode_all = true
+  if v == "--try_copy" then
+    transcode_all = false
   end
   if v == "--hq" then
     hq = true
