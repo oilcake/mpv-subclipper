@@ -14,6 +14,10 @@ function M.strip_path(path_to_file)
   return path, name, type
 end
 
+function M.strip_parent_dir(path)
+  return path:match('^.+/(.+)$')
+end
+
 function M.join(parts)
   -- joins parts of the full path, substitution of python's path.join
   local slash = "/"
@@ -62,7 +66,7 @@ end
 
 function M.create_dir_from(name)
   if not M.isdir(name) then
-    os.execute("mkdir "..M.escape_shell(name))
+    os.execute("mkdir -p "..M.escape_shell(name))
   end
 end
 

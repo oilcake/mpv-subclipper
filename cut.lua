@@ -42,6 +42,11 @@ function HandSaw:new(file, output_location)
   self.__index = self
   self.file = file
   local file_location, name, type = path.strip_path(file)
+  local parent_dir = path.strip_parent_dir(file_location)
+  if output_location ~= nil then
+    -- output_location = path.join({output_location, parent_dir})
+    output_location = output_location..'/'..parent_dir
+  end
   file_location = '/'..file_location
   self.output_dir = path.join({output_location or file_location, name})
   if not output_location then print('saving into default location') end
