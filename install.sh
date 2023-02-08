@@ -1,7 +1,7 @@
 path=~/.config/mpv/scripts/subcliper
 
 if [ ! -d $path ]; then
-	mkdir $path
+	mkdir -p $path
 fi
 
 for FILE in *.lua 
