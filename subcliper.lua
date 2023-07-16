@@ -120,7 +120,6 @@ function looper.init()
 
   assert(err == nil)
   set_loop()
-  print('Hoooraaaaay')
   mp.osd_message("loops found", 1)
 end
 

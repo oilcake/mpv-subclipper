@@ -20,7 +20,7 @@ for i, v in ipairs(args) do
   end
   if v == "--downscale" then
     downscale = true
-    scale_to = args[i+1]
+    scale_to = tonumber(args[i+1])
   end
   if v == "--short_clip" then
     short_clip = args[i+1]
