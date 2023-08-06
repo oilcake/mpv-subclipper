@@ -169,4 +169,14 @@ function looper.insert_right()
   set_loop()
 end
 
+function looper.split_at_play_position()
+  local loop = Regions[Index]
+  local now = mp.get_property_number("time-pos")
+  local new_right = Loop:new(now, loop.b)
+  table.insert(Regions, Index+1, new_right)
+  loop.b = now
+  Index = id_next()
+  set_loop()
+end
+
 return looper
