@@ -26,6 +26,18 @@ local Regions = {}
 Index = 1
 
 ---------------------
+--utils
+---------------------
+local function scene_list_file_to_regions(filename)
+  Regions = {}
+  collectgarbage()
+  for line in io.lines(filename) do
+    local scene_in, scene_out = line:match("start:%s(%d+%.%d+),%send:%s(%d+%.%d+)$")
+    print(tonumber(scene_in), tonumber(scene_out))
+    table.insert(Regions, Loop:new(tonumber(scene_in), tonumber(scene_out)))
+  end
+end
+---------------------
 --actions
 ---------------------
 
@@ -61,6 +73,8 @@ local function set_loop()
   mp.set_property_number("ab-loop-b", loop.b)
   mp.set_property_number("time-pos", loop.a)
   looper.save_loops()
+  local message = "from "..loop.a.." to "..loop.b
+  print(message)
 end
 
 local function unset_loop()
@@ -107,7 +121,14 @@ function looper.init()
   unset_loop()
   local err
   loops_filename = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
+  local scenes_filename = mp.get_property("path"):match("(.+)%..+$") .. ".scn"
   if not path.file_exists(loops_filename) then
+    if path.file_exists(scenes_filename) then
+      mp.osd_message("scenes found, initializing loops", 3)
+      scene_list_file_to_regions(scenes_filename)
+      set_loop()
+      return
+    end
     -- reset loops
     Regions = {}
     table.insert(Regions, Loop:new(0, mp.get_property_number("duration")))
@@ -121,6 +142,11 @@ function looper.init()
   assert(err == nil)
   set_loop()
   mp.osd_message("loops found", 1)
+end
+
+function looper.reset()
+  os.remove(loops_filename)
+  looper.init()
 end
 
 function looper.prev_loop()
