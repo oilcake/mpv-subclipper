@@ -1,3 +1,5 @@
+#!/bin/bash
+
 path=~/.config/mpv/scripts/subcliper
 
 if [ ! -d $path ]; then
@@ -7,4 +9,5 @@ fi
 for FILE in *.lua 
 do
 	cp $FILE $path
+	echo "coping file $FILE"
 done
