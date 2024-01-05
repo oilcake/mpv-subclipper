@@ -201,7 +201,6 @@ function looper.split_at_play_position()
   local new_right = Loop:new(now, loop.b)
   table.insert(Regions, Index+1, new_right)
   loop.b = now
-  Index = id_next()
   set_loop()
 end
 
