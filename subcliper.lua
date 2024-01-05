@@ -145,7 +145,9 @@ function looper.init()
 end
 
 function looper.reset()
-  os.remove(loops_filename)
+  if loops_filename ~= nil then
+    os.remove(loops_filename)
+  end
   looper.init()
 end
 
@@ -162,7 +164,9 @@ end
 function looper.loop_drop()
   remove_region()
   if #Regions == 0 then
-    os.remove(loops_filename)
+    if loops_filename ~= nil then
+      os.remove(loops_filename)
+    end
     looper.init()
     return
   end
