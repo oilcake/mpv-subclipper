@@ -174,28 +174,25 @@ function looper.loop_drop()
   set_loop()
 end
 
-function looper.insert_left()
+function looper.extend_left()
   local loop = Regions[Index]
-  local now = mp.get_property_number("time-pos")
-  local new_left = Loop:new(loop.a, now)
-  table.insert(Regions, Index, new_left)
-  local pause = mp.get_property_native("pause")
-  if pause then
-    loop.a = now
+  if Index == 1 then
+    loop.a = 0
+  else
+    local prev_loop = Regions[Index-1]
+    loop.a = prev_loop.b
   end
   set_loop()
 end
 
-function looper.insert_right()
+function looper.extend_right()
   local loop = Regions[Index]
-  local now = mp.get_property_number("time-pos")
-  local new_right = Loop:new(now, loop.b)
-  table.insert(Regions, Index+1, new_right)
-  local pause = mp.get_property_native("pause")
-  if pause then
-    loop.b = now
+  if Index == #Regions then
+    loop.b = mp.get_property_number("duration")
+  else
+    local next_loop = Regions[Index+1]
+    loop.b = next_loop.a
   end
-  Index = id_next()
   set_loop()
 end
 
