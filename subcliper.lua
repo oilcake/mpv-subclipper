@@ -28,13 +28,23 @@ Index = 1
 ---------------------
 --utils
 ---------------------
+local function default_loops()
+    -- reset loops
+    Regions = {}
+    table.insert(Regions, Loop:new(0, mp.get_property_number("duration")))
+end
+
 local function scene_list_file_to_regions(filename)
   Regions = {}
   collectgarbage()
-  for line in io.lines(filename) do
+  local scenes = io.lines(filename)
+  for line in scenes do
     local scene_in, scene_out = line:match("start:%s(%d+%.%d+),%send:%s(%d+%.%d+)$")
     print(tonumber(scene_in), tonumber(scene_out))
     table.insert(Regions, Loop:new(tonumber(scene_in), tonumber(scene_out)))
+  end
+  if #Regions == 0 then
+    default_loops()
   end
 end
 ---------------------
@@ -129,9 +139,7 @@ function looper.init()
       set_loop()
       return
     end
-    -- reset loops
-    Regions = {}
-    table.insert(Regions, Loop:new(0, mp.get_property_number("duration")))
+    default_loops()
     return
   end
   print(loops_filename)
