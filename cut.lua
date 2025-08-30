@@ -1,6 +1,6 @@
 local path = require("path")
 --
-local FFMPEG = 'ffmpeg -hide_banner -loglevel warning -stats'
+local FFMPEG = "ffmpeg -hide_banner -loglevel warning -stats"
 local SPACE = " "
 local INPUT = "-i"
 local FROM = "-ss"
@@ -11,7 +11,11 @@ local DO_NOT_OVERWRITE = "-n"
 local PRORES_TRANSCODE = "-c:v prores_ks -profile:v 0"
 local PRORES_CONTAINER = "mov"
 local MP4_CONTAINER = "mp4"
-local FFPROBE = "ffprobe -v error -hide_banner -of default=noprint_wrappers=0 -print_format flat -select_streams v:0 -show_entries stream=width,height,codec_type "
+local FFPROBE =
+"ffprobe -v error -hide_banner -of default=noprint_wrappers=0 -print_format flat -select_streams v:0 -show_entries stream=width,height,codec_type "
+local SMARTCUT = "smartcut"
+local KEEP = "--keep"
+local COMMA = ","
 
 -- main object that handles clip info and runs conversion process
 local HandSaw = {
@@ -23,7 +27,7 @@ local HandSaw = {
   scaled_height = 0,
   output = nil,
   name_prefix = "",
-  edges = nil, -- loop object
+  edges = nil,    -- loop object
   clip_name = nil,
   clip_path = nil, -- full path to clip
   what_to_do = COPY,
@@ -32,8 +36,8 @@ local HandSaw = {
   exit_status = {
     ok = nil,
     status = nil,
-    code = nil
-  }
+    code = nil,
+  },
 }
 
 -- new instance
@@ -45,11 +49,13 @@ function HandSaw:new(file, output_location)
   local parent_dir = path.strip_parent_dir(file_location)
   if output_location ~= nil then
     -- output_location = path.join({output_location, parent_dir})
-    output_location = output_location..'/'..parent_dir
+    output_location = output_location .. "/" .. parent_dir
   end
-  file_location = '/'..file_location
-  self.output_dir = path.join({output_location or file_location, name})
-  if not output_location then print('saving into default location') end
+  file_location = "/" .. file_location
+  self.output_dir = path.join({ output_location or file_location, name })
+  if not output_location then
+    io.write("saving into default location, cause no location was specified\n")
+  end
   path.create_dir_from(self.output_dir)
   self.container_from = type
   self.name_prefix = name
@@ -61,7 +67,7 @@ end
 function HandSaw:get_info()
   -- this method gets clip dimensions from ffprobe
   -- and checks if video file is valid
-  local response = io.popen(FFPROBE..path.escape_shell(self.file))
+  local response = io.popen(FFPROBE .. path.escape_shell(self.file))
   if response ~= nil then
     local ffprobe = response:read("*a")
     response:close()
@@ -81,16 +87,29 @@ end
 
 -- format all needed args
 function HandSaw:format_args()
-  self.clip_name = string.format("%s-%.2f-%.2f.%s",self.name_prefix, self.edges.a, self.edges.b, self.container_to)
-  self.clip_path = path.join({self.output_dir, self.clip_name})
+  self.clip_name = string.format("%s-%.2f-%.2f.%s", self.name_prefix, self.edges.a, self.edges.b, self.container_to)
+  self.clip_path = path.join({ self.output_dir, self.clip_name })
   local args = string.format(
-    "%s", FFMPEG..SPACE..
-    FROM..SPACE..self.edges.a..SPACE..
-    TO..SPACE..self.edges.b..SPACE..
-    DO_NOT_OVERWRITE..SPACE..
-    INPUT..SPACE..path.escape_shell(self.file)..SPACE..
-    self.what_to_do..SPACE..
-    path.escape_shell(self.clip_path)
+    "%s",
+    FFMPEG
+    .. SPACE
+    .. FROM
+    .. SPACE
+    .. self.edges.a
+    .. SPACE
+    .. TO
+    .. SPACE
+    .. self.edges.b
+    .. SPACE
+    .. DO_NOT_OVERWRITE
+    .. SPACE
+    .. INPUT
+    .. SPACE
+    .. path.escape_shell(self.file)
+    .. SPACE
+    .. self.what_to_do
+    .. SPACE
+    .. path.escape_shell(self.clip_path)
   )
   return args
 end
@@ -107,13 +126,31 @@ local function downscale_string(height)
   return string.format("-filter:v scale=-1:%d", height)
 end
 
---[[CONVERSION METHODS]]-- 
+--[[CONVERSION METHODS]]
+--
 function HandSaw:copy_clip()
   -- tries to save a lossless copy of video's section
-  self.what_to_do = COPY
   self.container_to = self.container_from
+  self.clip_name = string.format("%s-%.2f-%.2f.%s", self.name_prefix, self.edges.a, self.edges.b, self.container_to)
+  self.clip_path = path.join({ self.output_dir, self.clip_name })
+  local args = string.format(
+    "%s",
+    SMARTCUT
+    .. SPACE
+    .. path.escape_shell(self.file)
+    .. SPACE
+    .. path.escape_shell(self.clip_path)
+    .. SPACE
+    .. KEEP
+    .. SPACE
+    .. self.edges.a
+    .. COMMA
+    .. self.edges.b
+  )
+  print(string.format("copying with args: %s", args))
+  self.exit_status.ok, self.exit_status.status, self.exit_status.code = os.execute(args)
+  return self.exit_status
   -- returns shell's exit code
-  return self:do_thing()
 end
 
 function HandSaw:transcode_to_prores()
@@ -141,7 +178,7 @@ function HandSaw:downscale_to_mp4(height)
 end
 
 function HandSaw:downscale_to_prores(height)
-  self.what_to_do = PRORES_TRANSCODE..SPACE..downscale_string(height)
+  self.what_to_do = PRORES_TRANSCODE .. SPACE .. downscale_string(height)
   self.container_to = PRORES_CONTAINER
   return self:do_thing()
 end

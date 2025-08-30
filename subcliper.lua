@@ -40,7 +40,6 @@ local function scene_list_file_to_regions(filename)
   local scenes = io.lines(filename)
   for line in scenes do
     local scene_in, scene_out = line:match("start:%s(%d+%.%d+),%send:%s(%d+%.%d+)$")
-    print(tonumber(scene_in), tonumber(scene_out))
     table.insert(Regions, Loop:new(tonumber(scene_in), tonumber(scene_out)))
   end
   if #Regions == 0 then
@@ -83,8 +82,6 @@ local function set_loop()
   mp.set_property_number("ab-loop-b", loop.b)
   mp.set_property_number("time-pos", loop.a)
   looper.save_loops()
-  local message = "from "..loop.a.." to "..loop.b
-  print(message)
 end
 
 local function unset_loop()
@@ -99,7 +96,6 @@ end
 local function remove_region()
   table.remove(Regions, Index)
   unset_loop()
-  print('that\'s enough, drop it')
 end
 
 function looper.loop_start()
@@ -142,8 +138,6 @@ function looper.init()
     default_loops()
     return
   end
-  print(loops_filename)
-  print(mp.get_property('path'))
   -- load table from file
   Regions, err = saver.load(loops_filename)
 
