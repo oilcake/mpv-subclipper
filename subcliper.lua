@@ -130,7 +130,7 @@ function looper.init()
   local scenes_filename = mp.get_property("path"):match("(.+)%..+$") .. ".scn"
   if not path.file_exists(loops_filename) then
     if path.file_exists(scenes_filename) then
-      mp.osd_message("scenes found, initializing loops", 3)
+      mp.osd_message("scenes found, initializing loops", 0.5)
       scene_list_file_to_regions(scenes_filename)
       set_loop()
       return
@@ -143,7 +143,7 @@ function looper.init()
 
   assert(err == nil)
   set_loop()
-  mp.osd_message("loops found", 1)
+  mp.osd_message("loops found", 0.5)
 end
 
 function looper.reset()
