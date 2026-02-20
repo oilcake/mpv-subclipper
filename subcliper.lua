@@ -182,7 +182,10 @@ function looper.extend_left()
     loop.a = 0
   else
     local prev_loop = Regions[Index-1]
-    loop.a = prev_loop.b
+    -- works only if loops are not overlapping and don't have gaps between them
+    if loop.a ~= prev_loop.b then return end
+    loop.a = prev_loop.a
+    table.remove(Regions, Index-1)
   end
   set_loop()
 end
@@ -193,7 +196,10 @@ function looper.extend_right()
     loop.b = mp.get_property_number("duration")
   else
     local next_loop = Regions[Index+1]
-    loop.b = next_loop.a
+    -- works only if loops are not overlapping and don't have gaps between them
+    if loop.b ~= next_loop.a then return end
+    loop.b = next_loop.b
+    table.remove(Regions, Index+1)
   end
   set_loop()
 end
