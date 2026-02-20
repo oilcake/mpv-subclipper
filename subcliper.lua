@@ -187,6 +187,7 @@ function looper.extend_left()
     loop.a = prev_loop.a
     table.remove(Regions, Index-1)
   end
+  Index = id_prev()
   set_loop()
 end
 
