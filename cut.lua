@@ -133,6 +133,12 @@ function HandSaw:copy_clip()
   self.container_to = self.container_from
   self.clip_name = string.format("%s-%.2f-%.2f.%s", self.name_prefix, self.edges.a, self.edges.b, self.container_to)
   self.clip_path = path.join({ self.output_dir, self.clip_name })
+  if path.file_exists(self.clip_path) then
+    self.exit_status.ok = false
+    self.exit_status.status = nil
+    self.exit_status.code = 1
+    return self.exit_status
+  end
   local args = string.format(
     "%s",
     SMARTCUT

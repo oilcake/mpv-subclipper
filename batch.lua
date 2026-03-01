@@ -57,6 +57,7 @@ function Batch:process_single(file)
 	end
 	-- find the name of clip table file
 	local clip_table = tostring(file):match("(.+)%..+$") .. ".clp"
+	local scn_table = tostring(file):match("(.+)%..+$") .. ".scn"
 	if not path.file_exists(clip_table) then
 		return true
 	end
@@ -113,9 +114,14 @@ function Batch:process_single(file)
 		end
 	end
 	if self.remove_original then
-		local bin = path.join({ self.output_folder, "__READY" })
+		local file_location, _, _ = path.strip_path(file)
+		local parent_dir = path.strip_parent_dir(file_location)
+		local bin = path.join({ self.output_folder, "__READY", parent_dir })
 		path.move(file, bin)
 		path.move(clip_table, bin)
+		if path.file_exists(scn_table) then
+			path.move(scn_table, bin)
+		end
 		io.write(string.format("\nvideo and it's loop-file moved to bin\n\n"))
 	end
 	return true
@@ -128,7 +134,7 @@ function Batch:process_folder(folder)
 	if files ~= nil then
 		for _, file in pairs(files) do
 			local _, _, type = path.strip_path(file)
-			if type ~= "clp" then
+			if type ~= "clp" and type ~= "scn" then
 				done = Batch:process_single(file)
 				if done == nil then
 					io.write("\nstop requested\n")
