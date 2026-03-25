@@ -1,6 +1,6 @@
 local mp = require("mp")
 local saver = require("serializer")
-local path = require('path')
+local path = require("path")
 
 --actual script
 
@@ -10,14 +10,14 @@ local loops_filename = nil
 ---------------------
 --Loop definition
 ---------------------
-local Loop = {a = 0, b = 0}
+local Loop = { a = 0, b = 0 }
 
 function Loop:new(a, b)
-  self = {}
-  setmetatable({}, self)
-  self.a = a
-  self.b = b
-  return self
+	self = {}
+	setmetatable({}, self)
+	self.a = a
+	self.b = b
+	return self
 end
 
 -- array of loops
@@ -29,189 +29,197 @@ Index = 1
 --utils
 ---------------------
 local function default_loops()
-    -- reset loops
-    Regions = {}
-    table.insert(Regions, Loop:new(0, mp.get_property_number("duration")))
+	-- reset loops
+	Regions = {}
+	table.insert(Regions, Loop:new(0, mp.get_property_number("duration")))
 end
 
 local function scene_list_file_to_regions(filename)
-  Regions = {}
-  collectgarbage()
-  local scenes = io.lines(filename)
-  for line in scenes do
-    local scene_in, scene_out = line:match("start:%s(%d+%.%d+),%send:%s(%d+%.%d+)$")
-    table.insert(Regions, Loop:new(tonumber(scene_in), tonumber(scene_out)))
-  end
-  if #Regions == 0 then
-    default_loops()
-  end
+	Regions = {}
+	collectgarbage()
+	local scenes = io.lines(filename)
+	for line in scenes do
+		local scene_in, scene_out = line:match("start:%s(%d+%.%d+),%send:%s(%d+%.%d+)$")
+		table.insert(Regions, Loop:new(tonumber(scene_in), tonumber(scene_out)))
+	end
+	if #Regions == 0 then
+		default_loops()
+	end
 end
 ---------------------
 --actions
 ---------------------
 
 local function id_next()
-  local id = Index
-  if id >= #Regions then
-    id = 1
-  else id = (id + 1)
-  end
-  return id
+	local id = Index
+	if id >= #Regions then
+		id = 1
+	else
+		id = (id + 1)
+	end
+	return id
 end
 
 local function id_prev()
-  local id = Index
-  if id <= 1 then
-    id = #Regions
-  else id = id - 1
-  end
-  return id
+	local id = Index
+	if id <= 1 then
+		id = #Regions
+	else
+		id = id - 1
+	end
+	return id
 end
 
 local function validate_region()
-  local loop = Regions[Index]
-  if loop.a > loop.b then
-    loop.a, loop.b = loop.b, loop.a
-  end
+	local loop = Regions[Index]
+	if loop.a > loop.b then
+		loop.a, loop.b = loop.b, loop.a
+	end
 end
 
 local function set_loop()
-  validate_region()
-  local loop = Regions[Index]
-  mp.set_property_number("ab-loop-a", loop.a)
-  mp.set_property_number("ab-loop-b", loop.b)
-  mp.set_property_number("time-pos", loop.a)
-  looper.save_loops()
+	validate_region()
+	local loop = Regions[Index]
+	mp.set_property_number("ab-loop-a", loop.a)
+	mp.set_property_number("ab-loop-b", loop.b)
+	mp.set_property_number("time-pos", loop.a)
+	looper.save_loops()
 end
 
 local function unset_loop()
-  mp.set_property_native("ab-loop-a", 'no')
-  mp.set_property_native("ab-loop-b", 'no')
+	mp.set_property_native("ab-loop-a", "no")
+	mp.set_property_native("ab-loop-b", "no")
 end
 
 function looper.save_loops()
-  assert(saver.save(Regions, loops_filename) == nil )
+	assert(saver.save(Regions, loops_filename) == nil)
 end
 
 local function remove_region()
-  table.remove(Regions, Index)
-  unset_loop()
+	table.remove(Regions, Index)
+	unset_loop()
 end
 
 function looper.loop_start()
-  local loop = Regions[Index]
-  loop.a = mp.get_property_number("time-pos")
-  set_loop()
+	local loop = Regions[Index]
+	loop.a = mp.get_property_number("time-pos")
+	set_loop()
 end
 
 function looper.loop_end()
-  local loop = Regions[Index]
-  loop.b = mp.get_property_number("time-pos")
-  set_loop()
+	local loop = Regions[Index]
+	loop.b = mp.get_property_number("time-pos")
+	set_loop()
 end
 
 function looper.loop_add()
-  local jump_to = Regions[Index].b
-  local fin = mp.get_property_number("duration")
-  if jump_to ~= fin then
-    Index = #Regions + 1
-    unset_loop()
-    Regions[Index] = Loop:new(jump_to, fin)
-    mp.set_property_number("time-pos", jump_to)
-    set_loop()
-  end
+	local jump_to = Regions[Index].b
+	local fin = mp.get_property_number("duration")
+	if jump_to ~= fin then
+		Index = #Regions + 1
+		unset_loop()
+		Regions[Index] = Loop:new(jump_to, fin)
+		mp.set_property_number("time-pos", jump_to)
+		set_loop()
+	end
 end
 
 function looper.init()
-  Index = 1
-  unset_loop()
-  local err
-  loops_filename = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
-  local scenes_filename = mp.get_property("path"):match("(.+)%..+$") .. ".scn"
-  if not path.file_exists(loops_filename) then
-    if path.file_exists(scenes_filename) then
-      mp.osd_message("scenes found, initializing loops", 0.5)
-      scene_list_file_to_regions(scenes_filename)
-      set_loop()
-      return
-    end
-    default_loops()
-    return
-  end
-  -- load table from file
-  Regions, err = saver.load(loops_filename)
+	Index = 1
+	unset_loop()
+	local err
+	loops_filename = mp.get_property("path"):match("(.+)%..+$") .. ".clp"
+	local scenes_filename = mp.get_property("path"):match("(.+)%..+$") .. ".scn"
+	if not path.file_exists(loops_filename) then
+		if path.file_exists(scenes_filename) then
+			mp.osd_message("scenes found, initializing loops", 0.5)
+			scene_list_file_to_regions(scenes_filename)
+			set_loop()
+			return
+		end
+		default_loops()
+		return
+	end
+	-- load table from file
+	Regions, err = saver.load(loops_filename)
 
-  assert(err == nil)
-  set_loop()
-  mp.osd_message("loops found", 0.5)
+	assert(err == nil)
+	set_loop()
+	mp.osd_message("loops found", 0.5)
 end
 
 function looper.reset()
-  if loops_filename ~= nil then
-    os.remove(loops_filename)
-  end
-  looper.init()
+	if loops_filename ~= nil then
+		os.remove(loops_filename)
+	end
+	looper.init()
 end
 
 function looper.prev_loop()
-  Index = id_prev()
-  set_loop()
+	Index = id_prev()
+	set_loop()
 end
 
 function looper.next_loop()
-  Index = id_next()
-  set_loop()
+	Index = id_next()
+	set_loop()
 end
 
 function looper.loop_drop()
-  remove_region()
-  if #Regions == 0 then
-    if loops_filename ~= nil then
-      os.remove(loops_filename)
-    end
-    looper.init()
-    return
-  end
-  if not Regions[Index] then Index = id_prev() end
-  set_loop()
+	remove_region()
+	if #Regions == 0 then
+		if loops_filename ~= nil then
+			os.remove(loops_filename)
+		end
+		looper.init()
+		return
+	end
+	if not Regions[Index] then
+		Index = id_prev()
+	end
+	set_loop()
 end
 
 function looper.extend_left()
-  local loop = Regions[Index]
-  if Index == 1 then
-    loop.a = 0
-  else
-    local prev_loop = Regions[Index-1]
-    -- works only if loops are not overlapping and don't have gaps between them
-    if loop.a ~= prev_loop.b then return end
-    loop.a = prev_loop.a
-    table.remove(Regions, Index-1)
-  end
-  Index = id_prev()
-  set_loop()
+	local loop = Regions[Index]
+	if Index == 1 then
+		loop.a = 0
+	else
+		local prev_loop = Regions[Index - 1]
+		-- works only if loops are not overlapping and don't have gaps between them
+		if loop.a ~= prev_loop.b then
+			return
+		end
+		loop.a = prev_loop.a
+		table.remove(Regions, Index - 1)
+	end
+	Index = id_prev()
+	set_loop()
 end
 
 function looper.extend_right()
-  local loop = Regions[Index]
-  if Index == #Regions then
-    loop.b = mp.get_property_number("duration")
-  else
-    local next_loop = Regions[Index+1]
-    -- works only if loops are not overlapping and don't have gaps between them
-    if loop.b ~= next_loop.a then return end
-    loop.b = next_loop.b
-    table.remove(Regions, Index+1)
-  end
-  set_loop()
+	local loop = Regions[Index]
+	if Index == #Regions then
+		loop.b = mp.get_property_number("duration")
+	else
+		local next_loop = Regions[Index + 1]
+		-- works only if loops are not overlapping and don't have gaps between them
+		if loop.b ~= next_loop.a then
+			return
+		end
+		loop.b = next_loop.b
+		table.remove(Regions, Index + 1)
+	end
+	set_loop()
 end
 
 function looper.split_at_play_position()
-  local loop = Regions[Index]
-  local now = mp.get_property_number("time-pos")
-  local new_right = Loop:new(now, loop.b)
-  table.insert(Regions, Index+1, new_right)
-  loop.b = now
-  set_loop()
+	local loop = Regions[Index]
+	local now = mp.get_property_number("time-pos")
+	local new_right = Loop:new(now, loop.b)
+	table.insert(Regions, Index + 1, new_right)
+	loop.b = now
+	set_loop()
 end
 
 return looper
