@@ -1,16 +1,16 @@
 # Subclipper
 
-`Subclipper` is a plugin on top of [mpv](https://github.com/mpv-player/mpv) that turns video player into a portable editing station.
-Mark loops (A-B repeat) while watching, save them to a file, and later process into separate clips(if needed of course).
+`Subclipper` is a plugin on top of [mpv](https://github.com/mpv-player/mpv) that turns the video player into a portable editing station.
+Mark loops (A-B repeat) while watching, save them to a file, and later process into separate clips (if needed, of course).
 
 ## Features
 - Set loop points with customisable hotkeys
-- Save loops to `.clp` file alongside your video(happens automatically)
+- Save loops to `.clp` file alongside your video (happens automatically)
 - Support any number of loops per video
 - Automatically load existing loops when opening a video
 - Export loops to individual clips using `process.lua`
 
-Includes convenient hotkeys for loop manipulations.
+Includes convenient hotkeys for loop manipulation.
 
 ## Installation
 If you keep `mpv` files in the default location, install with:
@@ -18,7 +18,7 @@ If you keep `mpv` files in the default location, install with:
 bash install.sh
 ```
 
-Currently Mac and Linux only. Contributions for cross-platform are welcome.
+Currently Mac and Linux only. Contributions for cross-platform support are welcome.
 
 ## Usage
 
