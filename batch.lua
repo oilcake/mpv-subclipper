@@ -135,8 +135,8 @@ function Batch:process_folder(folder)
 	assert(err == nil)
 	if files ~= nil then
 		for _, file in pairs(files) do
-			local _, _, type = path.strip_path(file)
-			if type ~= "clp" and type ~= "scn" then
+			local _, _, extnsn = path.strip_path(file)
+			if extnsn ~= "clp" and extnsn ~= "scn" then
 				done = self:process_single(file)
 				if done == nil then
 					io.write("\nstop requested\n")
