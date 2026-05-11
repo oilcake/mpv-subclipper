@@ -13,17 +13,18 @@ local loops_filename = nil
 local Loop = { a = 0, b = 0 }
 
 function Loop:new(a, b)
-	self = {}
-	setmetatable({}, self)
-	self.a = a
-	self.b = b
-	return self
+	local l = {}
+	setmetatable(l, self)
+	self.__index = self
+	l.a = a
+	l.b = b
+	return l
 end
 
 -- array of loops
 local Regions = {}
 
-Index = 1
+local Index = 1
 
 ---------------------
 --utils
@@ -36,7 +37,7 @@ end
 
 local function scene_list_file_to_regions(filename)
 	Regions = {}
-	collectgarbage()
+	-- collectgarbage()
 	local scenes = io.lines(filename)
 	for line in scenes do
 		local scene_in, scene_out = line:match("start:%s(%d+%.%d+),%send:%s(%d+%.%d+)$")

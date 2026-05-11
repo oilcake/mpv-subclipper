@@ -2,8 +2,8 @@ local batch = require("batch")
 
 -- setup
 local args = { ... }
-local folder
-local save_to
+local input_folder
+local output_folder
 local downscale = false
 local scale_to = nil
 local transcode_all = true
@@ -14,10 +14,10 @@ local remove_original = true
 -- parse command line arguments
 for i, v in ipairs(args) do
 	if v == "--input" then
-		folder = args[i + 1]
+		input_folder = args[i + 1]
 	end
 	if v == "--output" then
-		save_to = args[i + 1]
+		output_folder = args[i + 1]
 	end
 	if v == "--downscale" then
 		downscale = true
@@ -39,7 +39,7 @@ end
 
 --[[conversion]]
 -- create batch processor
-local b = batch:new(save_to)
+local b = batch:new(output_folder)
 -- pass args from command line
 if downscale then
 	b.to_scale = downscale
@@ -52,5 +52,5 @@ b.remove_original = remove_original
 
 -- run process
 if b ~= nil then
-	b:process_folder(folder)
+	b:process_folder(input_folder)
 end

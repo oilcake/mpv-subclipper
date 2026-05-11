@@ -16,12 +16,14 @@ local Batch = {
 }
 
 function Batch:new(output_folder)
-	-- setmetatable({}, self)
-	self.output_folder = output_folder
-	local logname = output_folder .. "/log.txt"
-	self.log = io.open(logname, "w")
-	io.output(self.log)
-	return self
+	local o = {}
+	setmetatable(o, self)
+	self.__index = self
+	o.output_folder = output_folder
+	local logname = o.output_folder .. "/log.txt"
+	o.log = io.open(logname, "w")
+	io.output(o.log)
+	return o
 end
 
 function Batch:process_single_clip(clip, loop)
@@ -135,7 +137,7 @@ function Batch:process_folder(folder)
 		for _, file in pairs(files) do
 			local _, _, type = path.strip_path(file)
 			if type ~= "clp" and type ~= "scn" then
-				done = Batch:process_single(file)
+				done = self:process_single(file)
 				if done == nil then
 					io.write("\nstop requested\n")
 					return

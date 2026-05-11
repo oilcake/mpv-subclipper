@@ -24,7 +24,8 @@ local HandSaw = {
 	container_to = nil,
 	width = 0,
 	height = 0,
-	scaled_height = 0,
+	-- looks like a dead attribute, never even used
+	-- scaled_height = 0,
 	output = nil,
 	name_prefix = "",
 	edges = nil, -- loop object
@@ -42,9 +43,10 @@ local HandSaw = {
 
 -- new instance
 function HandSaw:new(file, output_location)
-	setmetatable({}, self)
+	local o = {}
+	setmetatable(o, self)
 	self.__index = self
-	self.file = file
+	o.file = file
 	local file_location, name, type = path.strip_path(file)
 	local parent_dir = path.strip_parent_dir(file_location)
 	if output_location ~= nil then
@@ -52,16 +54,16 @@ function HandSaw:new(file, output_location)
 		output_location = output_location .. "/" .. parent_dir
 	end
 	file_location = "/" .. file_location
-	self.output_dir = path.join({ output_location or file_location, name })
+	o.output_dir = path.join({ output_location or file_location, name })
 	if not output_location then
 		io.write("saving into default location, cause no location was specified\n")
 	end
-	path.create_dir_from(self.output_dir)
-	self.container_from = type
-	self.name_prefix = name
-	self:get_info()
-	self.scaled_height = self.height
-	return self
+	path.create_dir_from(o.output_dir)
+	o.container_from = type
+	o.name_prefix = name
+	o:get_info()
+	-- o.scaled_height = o.height
+	return o
 end
 
 function HandSaw:get_info()
