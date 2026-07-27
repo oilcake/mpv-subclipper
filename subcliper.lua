@@ -37,7 +37,6 @@ end
 
 local function scene_list_file_to_regions(filename)
 	Regions = {}
-	-- collectgarbage()
 	local scenes = io.lines(filename)
 	for line in scenes do
 		local scene_in, scene_out = line:match("start:%s(%d+%.%d+),%send:%s(%d+%.%d+)$")
