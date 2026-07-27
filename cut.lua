@@ -11,8 +11,9 @@ local DO_NOT_OVERWRITE = "-n"
 local PRORES_TRANSCODE = "-c:v prores_ks -profile:v 0"
 local PRORES_CONTAINER = "mov"
 local MP4_CONTAINER = "mp4"
-local FFPROBE =
-	"ffprobe -v error -hide_banner -of default=noprint_wrappers=0 -print_format flat -select_streams v:0 -show_entries stream=width,height,codec_type "
+local FFPROBE = [[ffprobe -v error -hide_banner -of default=noprint_wrappers=0 \
+-print_format flat -select_streams v:0 \
+-show_entries stream=width,height,codec_type ]]
 local SMARTCUT = "smartcut"
 local KEEP = "--keep"
 local COMMA = ","

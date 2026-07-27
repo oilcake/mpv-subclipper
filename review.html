@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subcliper Code Review</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #1a1a1a; background: #fdfdfd; }
+  h1 { border-bottom: 2px solid #d0d0d0; padding-bottom: 8px; }
+  h2 { margin-top: 32px; color: #2c3e50; }
+  h3 { color: #555; }
+  .file { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.9em; background: #eee; padding: 2px 6px; border-radius: 4px; }
+  pre { background: #f4f4f4; padding: 12px 16px; border-radius: 6px; overflow-x: auto; font-size: 0.87em; }
+  code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.9em; }
+  .bad { color: #c0392b; }
+  .good { color: #27ae60; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.78em; font-weight: 600; margin-right: 6px; }
+  .tag-critical { background: #ffe0e0; color: #900; }
+  .tag-high { background: #fff3cd; color: #856404; }
+  .tag-medium { background: #e8f0fe; color: #174ea6; }
+  .tag-low { background: #e8e8e8; color: #444; }
+  .tag-style { background: #e8f5e9; color: #2e7d32; }
+  .issue { border-left: 4px solid #ccc; padding: 8px 16px; margin: 16px 0; background: #fafafa; }
+  .issue.critical { border-color: #c0392b; }
+  .issue.high { border-color: #e67e22; }
+  .issue.medium { border-color: #2980b9; }
+  .issue.low { border-color: #999; }
+  .summary { background: #f0f7fb; padding: 16px 20px; border-radius: 8px; margin: 20px 0; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 28px 0; }
+  .checkpoint { width: 18px; height: 18px; margin-right: 8px; cursor: pointer; accent-color: #27ae60; vertical-align: middle; }
+  .issue label { cursor: pointer; display: flex; align-items: flex-start; gap: 6px; }
+  .issue label strong { flex: 1; }
+  .issue.done { opacity: 0.55; }
+  .progress { font-size: 0.92em; margin-top: 8px; color: #555; }
+  .progress span { font-weight: 700; color: #27ae60; }
+</style>
+</head>
+<body>
+
+<h1>🔍 Subcliper — Code Review</h1>
+
+<p>
+  Review of all <code>.lua</code> files in the project. Focus on correctness, Lua best practices,
+  and code clarity. Issues are sorted by severity.
+</p>
+
+<div class="summary">
+  <strong>Summary:</strong> 2 critical bugs, 3 high-severity issues, 4 medium, 5 low / style.
+  The most serious problems are incorrect OOP constructor patterns that cause unintended
+  singleton/shared‑state behaviour, and a leaked global variable.
+  <div class="progress">✅ Fixed: <span id="doneCount">0</span> / <span id="totalCount">22</span></div>
+</div>
+
+<!-- ============================================================ -->
+<h2><span class="file">cut.lua</span></h2>
+
+<div class="issue critical">
+  <span class="tag tag-critical">CRITICAL</span>
+  <label><input type="checkbox" class="checkpoint" checked> <strong>HandSaw:new() — конструктор создаёт синглтон вместо нового экземпляра</strong></label>
+<pre>function HandSaw:new(file, output_location)
+    <span class="bad">setmetatable({}, self)  -- результат выброшен!</span>
+    self.__index = self
+    self.file = file
+    ...
+    return self  -- возвращается прототип HandSaw, а не новый объект
+end</pre>
+  <p>
+    <code>setmetatable({}, self)</code> создаёт новую таблицу и назначает ей метатаблицу,
+    но результат никуда не сохраняется. Дальше функция модифицирует <code>self</code>
+    (который является таблицей-прототипом <code>HandSaw</code>) и возвращает его же.
+    <strong>Все «экземпляры» HandSaw — одна и та же таблица.</strong>
+    При обработке папки каждый следующий файл затирает данные предыдущего.
+  </p>
+  <p>Правильный паттерн:</p>
+<pre>function HandSaw:new(file, output_location)
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    o.file = file
+    ...
+    return o
+end</pre>
+</div>
+
+<div class="issue low" style="border-left-color:#f39c12;">
+  <span class="tag tag-medium" style="background:#e8f5e9;color:#2e7d32;">✅ RESOLVED</span>
+  <strong>Регрессия: <code>o.scaled_height = self.height</code></strong>
+  <p>
+    Строка закомментирована (<code>-- o.scaled_height = o.height</code>). Проблема устранена.
+  </p>
+</div>
+
+<div class="issue high">
+  <span class="tag tag-high">HIGH</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Дублирование логики в <code>format_args()</code> и <code>copy_clip()</code></strong></label>
+  <p>
+    Оба метода независимо вычисляют <code>clip_name</code> и <code>clip_path</code>.
+    При изменении формата имени придётся править в двух местах.
+    Лучше вынести формирование имени в отдельный метод или вызывать
+    <code>format_args</code> из <code>copy_clip</code>.
+  </p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2><span class="file">subcliper.lua</span></h2>
+
+<div class="issue critical">
+  <span class="tag tag-critical">CRITICAL</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Index — утечка в глобальную область видимости</strong></label>
+<pre>local Regions = {}
+
+<span class="bad">Index = 1</span>  -- нет local! Переменная стала глобальной</pre>
+  <p>
+    Случайно пропущенный <code>local</code>. Поскольку mpv выполняет все скрипты
+    в одном Lua-состоянии, глобальная <code>Index</code> может конфликтовать
+    с другими плагинами или быть перезаписана. Нужно: <code>local Index = 1</code>.
+  </p>
+</div>
+
+<div class="issue high">
+  <span class="tag tag-high">HIGH</span>
+  <label><input type="checkbox" class="checkpoint" checked> <strong>Loop:new() — сломанный конструктор (ИСПРАВЛЕНО)</strong></label>
+<pre>function Loop:new(a, b)
+    <span class="bad">self = {}</span>             -- перезаписывает неявный параметр self
+    <span class="bad">setmetatable({}, self)</span> -- результат выброшен
+    self.a = a
+    self.b = b
+    return self              -- возвращает пустую таблицу без метатаблицы
+end</pre>
+  <p>
+    <code>self = {}</code> создаёт новый локальный <code>self</code>,
+    затеняя параметр (которым при вызове <code>Loop:new(...)</code> является таблица <code>Loop</code>).
+    <code>setmetatable({}, self)</code> создаёт таблицу с метатаблицей, но результат теряется.
+    Сейчас это работает только потому, что у экземпляров Loop нет методов —
+    они используются как простые контейнеры <code>{a, b}</code>.
+    Но код вводит в заблуждение. Правильный вариант:
+  </p>
+<pre>function Loop:new(a, b)
+    return setmetatable({ a = a, b = b }, { __index = self })
+end</pre>
+</div>
+
+<div class="issue medium" style="border-left-color:#c0392b;">
+  <span class="tag tag-critical" style="background:#ffe0e0;color:#900;">🆕 NEW</span>
+  <strong>Лог-файл не закрывается на пути ошибок в <code>process_folder</code></strong>
+  <p>
+    <code>Batch:new()</code> открывает <code>o.log</code> и делает <code>io.output(o.log)</code>.
+    В <code>process_folder()</code> вызов <code>self.log:close()</code> происходит только на
+    пути успеха (<code>"success!"</code>). Если обработка прерывается досрочно
+    (<code>done == nil</code> или <code>done == false</code>), дескриптор лога остаётся
+    открытым. На уровне одного запуска process.lua это не критично (GC закроет),
+    но при многократных вызовах возможна утечка. Кроме того,
+    <code>io.output(o.log)</code> меняет глобальный поток вывода для всего Lua-состояния —
+    побочный эффект, который может повлиять на другие модули.
+  </p>
+  <p>Рекомендация: использовать <code>o.log:write(...)</code> вместо <code>io.output()</code> + <code>io.write()</code>,
+    и закрывать лог в <code>finally</code>-подобном блоке или во всех точках возврата.</p>
+</div>
+
+<div class="issue medium">
+  <span class="tag tag-medium">MEDIUM</span>
+  <label><input type="checkbox" class="checkpoint"> <strong><code>scene_list_file_to_regions</code> — вызов <code>collectgarbage()</code></strong></label>
+  <p>
+    Принудительный сборщик мусора посреди функции выглядит как костыль.
+    Если проблема была в нехватке памяти при обработке большого количества сцен,
+    лучше переписать на потоковую обработку без накопления. Если нет — убрать.
+  </p>
+</div>
+
+<div class="issue low">
+  <span class="tag tag-low">LOW</span>
+  <label><input type="checkbox" class="checkpoint"> <strong><code>loop_drop</code> — неконсистентное состояние при удалении</strong></label>
+  <p>
+    <code>remove_region()</code> вызывает <code>unset_loop()</code>,
+    который обращается к mpv API без проверки, остались ли регионы.
+    После удаления последнего региона вызывается <code>looper.init()</code>,
+    что восстанавливает состояние, но промежуточный вызов <code>unset_loop()</code>
+    избыточен и может вызвать предупреждения mpv при пустом списке.
+  </p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2><span class="file">batch.lua</span></h2>
+
+<div class="issue high">
+  <span class="tag tag-high">HIGH</span>
+  <label><input type="checkbox" class="checkpoint" checked> <strong>Batch:new() — модифицирует прототип, а не создаёт экземпляр (ИСПРАВЛЕНО)</strong></label>
+<pre>function Batch:new(output_folder)
+    <span class="bad">self.output_folder = output_folder</span>
+    ...
+    return self  -- self === Batch (прототип)
+end</pre>
+  <p>
+    Здесь нет даже попытки создать новую таблицу. Вызов <code>batch:new(save_to)</code>
+    модифицирует таблицу-прототип <code>Batch</code> и возвращает её же.
+    При однократном использовании (как в <code>process.lua</code>) это работает,
+    но повторный вызов <code>:new()</code> перезапишет состояние.
+    Нужно создавать <code>local o = {}; setmetatable(o, self); self.__index = self</code>.
+  </p>
+</div>
+
+<div class="issue medium">
+  <span class="tag tag-medium">MEDIUM</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Переменная <code>type</code> затеняет встроенную функцию</strong></label>
+<pre>local _, _, <span class="bad">type</span> = path.strip_path(file)
+if type ~= "clp" and type ~= "scn" then ...</pre>
+  <p>
+    <code>type</code> — имя встроенной функции Lua. Переопределение может запутать
+    и помешать использованию <code>type()</code> ниже по коду. Лучше: <code>ext</code>.
+  </p>
+</div>
+
+<div class="issue medium">
+  <span class="tag tag-medium">MEDIUM</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Ненадёжная проверка exit code 255</strong></label>
+<pre>if status.code == 255 then
+    io.write("most probably incomplete and will be deleted:\n" ...)
+    os.remove(clip.clip_path)
+end</pre>
+  <p>
+    Код 255 не является стандартным для «неполного файла». ffmpeg возвращает
+    код ошибки в зависимости от причины прерывания. Лучше проверять реальный размер
+    выходного файла или длительность через ffprobe.
+  </p>
+</div>
+
+<div class="issue low">
+  <span class="tag tag-low">LOW</span>
+  <label><input type="checkbox" class="checkpoint"> <strong><code>remove_original</code> — перемещение в <code>__READY</code></strong></label>
+  <p>
+    Исходные файлы перемещаются в поддиректорию <code>__READY</code>.
+    Если операция обрезания упадёт на середине, часть файлов уже будет перемещена,
+    а часть — нет. Состояние становится неконсистентным. Надёжнее перемещать
+    только после полного успеха, либо вести лог отдельно.
+  </p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2><span class="file">path.lua</span></h2>
+
+<div class="issue medium">
+  <span class="tag tag-medium">MEDIUM</span>
+  <label><input type="checkbox" class="checkpoint"> <strong><code>strip_path</code> — файлы в корне возвращают nil</strong></label>
+<pre>function M.strip_path(path_to_file)
+    local path = path_to_file:match("^/?(.+)/")   -- требует хотя бы один /
+    local name = path_to_file:match(".+/(.+)%..+$")
+    local type = path_to_file:match(".+%.(.+)$")
+    ...
+end</pre>
+  <p>
+    Для <code>/video.mp4</code> или <code>video.mp4</code> ни один паттерн не сработает —
+    все три переменные будут <code>nil</code>. Стоит добавить fallback:
+    если path не найден — path = <code>""</code>; если name не найден — поиск без директории.
+  </p>
+</div>
+
+<div class="issue medium">
+  <span class="tag tag-medium">MEDIUM</span>
+  <label><input type="checkbox" class="checkpoint"> <strong><code>M.exists</code> — хак с <code>os.rename(file, file)</code></strong></label>
+  <p>
+    Трюк с переименованием файла в самого себя работает на большинстве Unix-систем
+    (rename(2) с одинаковыми путями — no-op), но теоретически может обновить
+    mtime на некоторых ФС. Проще и надёжнее:
+  </p>
+<pre>function M.exists(file)
+    local f = io.open(file, "r")
+    if f then f:close(); return true end
+    return false
+end</pre>
+</div>
+
+<div class="issue low">
+  <span class="tag tag-low">LOW</span>
+  <label><input type="checkbox" class="checkpoint"> <strong><code>M.move</code> — баг с файлами без расширения</strong></label>
+<pre>local _, name, ext = M.strip_path(file)
+local full_name = name .. "." .. ext   -- ext = nil → "name.nil"</pre>
+  <p>
+    Если у файла нет расширения, <code>ext</code> будет <code>nil</code>,
+    и конкатенация даст <code>"filename.nil"</code>. Нужно:
+    <code>local full_name = ext and (name .. "." .. ext) or name</code>.
+  </p>
+</div>
+
+<div class="issue low">
+  <span class="tag tag-low">LOW</span>
+  <label><input type="checkbox" class="checkpoint"> <strong><code>M.listdir</code> — вызов <code>find</code> без экранирования спецсимволов в пути</strong></label>
+  <p>
+    Путь оборачивается в двойные кавычки, но если в имени есть <code>$</code> или
+    <code>`</code>, shell может интерпретировать их. Лучше использовать
+    <code>io.popen</code> с экранированием через <code>M.escape_shell</code>.
+  </p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2><span class="file">serializer.lua</span></h2>
+
+<div class="issue low">
+  <span class="tag tag-low">LOW</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Использование <code>%q</code> в Lua 5.1 / LuaJIT</strong></label>
+  <p>
+    <code>string.format("%q", s)</code> официально добавлен в Lua 5.2.
+    mpv использует LuaJIT, который <em>поддерживает</em> <code>%q</code>, так что
+    это работает. Но для переносимости на vanilla Lua 5.1 стоило бы
+    реализовать <code>exportstring</code> вручную.
+  </p>
+</div>
+
+<div class="issue low">
+  <span class="tag tag-low">LOW</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Комментарии-разделители из дефисов</strong></label>
+  <p>
+    Многострочные разделители из 100+ дефисов создают визуальный шум.
+    Достаточно однократного <code>--</code> или короткого разделителя.
+  </p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2><span class="file">process.lua</span></h2>
+
+<div class="issue medium">
+  <span class="tag tag-medium">MEDIUM</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Парсинг аргументов не проверяет ошибки</strong></label>
+<pre>for i, v in ipairs(args) do
+    if v == "--input" then
+        folder = args[i + 1]
+    end
+    ...
+end</pre>
+  <p>
+    Если <code>--input</code> — последний аргумент, <code>args[i+1]</code> будет <code>nil</code>.
+    Если пользователь передаст <code>--input --output</code>, то <code>--output</code>
+    станет путём к input. Нет проверки, что обязательные параметры заданы.
+    Стоит добавить валидацию и вывод <code>--help</code>.
+  </p>
+</div>
+
+<div class="issue low">
+  <span class="tag tag-low">LOW</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Избыточная проверка <code>if b ~= nil then</code></strong></label>
+  <p>
+    <code>batch:new()</code> всегда возвращает объект (или падает), так что
+    проверка на nil не имеет смысла.
+  </p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2><span class="file">main.lua</span></h2>
+
+<div class="issue style">
+  <span class="tag tag-style">STYLE</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Закомментированный код</strong></label>
+<pre>--[[
+mp.add_key_binding("§", "save", add your function here)
+--]]</pre>
+  <p>
+    Мёртвый код лучше убрать. Если это пример — вынести в документацию
+    или комментарий без многострочного блока.
+  </p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>🎯 Общие замечания</h2>
+
+<div class="issue style">
+  <span class="tag tag-style">STYLE</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Неединообразный стиль OOP</strong></label>
+  <p>
+    В проекте три реализации конструкторов — и все три разные (и две с ошибками).
+    Выберите один паттерн и придерживайтесь его:
+  </p>
+<pre>-- Рекомендуемый паттерн для Lua
+local MyClass = {}
+
+function MyClass:new(...)
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    -- инициализация полей o
+    return o
+end</pre>
+</div>
+
+<div class="issue style">
+  <span class="tag tag-style">STYLE</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Именование: смесь стилей</strong></label>
+  <p>
+    <code>CamelCase</code> (<code>HandSaw</code>, <code>Regions</code>),
+    <code>snake_case</code> (<code>validate_region</code>, <code>set_loop</code>),
+    <code>UPPER_CASE</code> (<code>FFMPEG</code>, <code>SPACE</code>, <code>KEEP</code>).
+    Стоит выбрать один стиль. Типичные конвенции Lua: <code>snake_case</code>
+    для функций и переменных, <code>PascalCase</code> для классов-таблиц.
+  </p>
+</div>
+
+<div class="issue style">
+  <span class="tag tag-style">STYLE</span>
+  <label><input type="checkbox" class="checkpoint"> <strong>Избыточные глобальные константы в cut.lua</strong></label>
+  <p>
+    Переменные <code>SPACE</code>, <code>COMMA</code>, <code>INPUT</code>
+    объявлены как локальные модуля, но используются только внутри методов
+    <code>HandSaw</code>. Их можно сделать полями класса или инлайнить,
+    чтобы уменьшить когнитивную нагрузку при чтении.
+  </p>
+</div>
+
+<hr>
+
+<h2>📋 Итого по приоритетам</h2>
+
+<table style="border-collapse:collapse; width:100%; margin-top:12px;">
+<tr style="background:#ffe0e0;">
+  <td style="padding:8px 12px; font-weight:600;">🔴 Critical</td>
+  <td style="padding:8px 12px;">HandSaw:new — синглтон; Index — глобальная переменная</td>
+</tr>
+<tr style="background:#fff3cd;">
+  <td style="padding:8px 12px; font-weight:600;">🟠 High</td>
+  <td style="padding:8px 12px;">Loop:new — сломан; Batch:new — синглтон; дублирование в cut.lua</td>
+</tr>
+<tr style="background:#e8f0fe;">
+  <td style="padding:8px 12px; font-weight:600;">🔵 Medium</td>
+  <td style="padding:8px 12px;">collectgarbage, затенение type, exit code 255, strip_path + move баги, парсинг аргументов, os.rename хак</td>
+</tr>
+<tr style="background:#f0f0f0;">
+  <td style="padding:8px 12px; font-weight:600;">⚪ Low / Style</td>
+  <td style="padding:8px 12px;">listdir экранирование, %q в LuaJIT, мёртвый код, неединообразный стиль</td>
+</tr>
+</table>
+
+<script>
+(function() {
+  var boxes = document.querySelectorAll('.checkpoint');
+  var doneSpan = document.getElementById('doneCount');
+  var totalSpan = document.getElementById('totalCount');
+  totalSpan.textContent = boxes.length;
+  function update() {
+    var n = 0;
+    for (var i = 0; i < boxes.length; i++) {
+      if (boxes[i].checked) n++;
+      boxes[i].closest('.issue').classList.toggle('done', boxes[i].checked);
+    }
+    doneSpan.textContent = n;
+    try { localStorage.setItem('subcliper-review', JSON.stringify(Array.from(boxes).map(function(b){return b.checked}))); } catch(e) {}
+  }
+  try {
+    var saved = JSON.parse(localStorage.getItem('subcliper-review'));
+    if (saved) for (var i = 0; i < boxes.length && i < saved.length; i++) boxes[i].checked = saved[i];
+  } catch(e) {}
+  update();
+  for (var i = 0; i < boxes.length; i++) boxes[i].addEventListener('change', update);
+})();
+</script>
+</body>
+</html>
