@@ -21,9 +21,7 @@ end
 function M.join(parts)
 	-- joins parts of the full path, substitution of python's path.join
 	local slash = "/"
-	local joined = ""
-	joined = table.concat(parts, slash)
-	return joined
+	return table.concat(parts, slash)
 end
 
 function M.exists(file)
