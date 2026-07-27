@@ -84,7 +84,7 @@ function Batch:process_single(file)
 	-- process all regions
 	if loops ~= nil then
 		-- initialize shell's response
-		local status = {}
+		local status
 		for _, loop in pairs(loops) do
 			-- to save a section from current clip
 			clip:define_region(loop)
