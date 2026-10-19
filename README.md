@@ -39,4 +39,4 @@ See `batch.lua` for processing examples (reencode, lossless cut, etc.).
 - `process.lua` passes arguments to the batch processor
 - Adapt both scripts to fit your workflow
 - If you need lossless cut functionality make sure [smartcut](https://github.com/skeskinen/smartcut) is on your `PATH`
-- The same goes to `ffmpeg` - it is needed to reencode clips if you use `process.lua`
+- The same goes for `ffmpeg` - it is needed to reencode clips if you use `process.lua`
