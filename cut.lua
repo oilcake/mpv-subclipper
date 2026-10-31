@@ -25,8 +25,6 @@ local HandSaw = {
 	container_to = nil,
 	width = 0,
 	height = 0,
-	-- looks like a dead attribute, never even used
-	-- scaled_height = 0,
 	output = nil,
 	name_prefix = "",
 	edges = nil, -- loop object
@@ -63,7 +61,6 @@ function HandSaw:new(file, output_location)
 	o.container_from = type
 	o.name_prefix = name
 	o:get_info()
-	-- o.scaled_height = o.height
 	return o
 end
 
