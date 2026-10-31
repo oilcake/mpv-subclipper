@@ -85,10 +85,15 @@ function HandSaw:define_region(loop)
 	self.edges = loop
 end
 
--- format all needed args
-function HandSaw:format_args()
+-- build clip_name/clip_path from name_prefix, edges and container_to
+function HandSaw:set_output()
 	self.clip_name = string.format("%s-%.2f-%.2f.%s", self.name_prefix, self.edges.a, self.edges.b, self.container_to)
 	self.clip_path = path.join({ self.output_dir, self.clip_name })
+end
+
+-- format all needed args
+function HandSaw:format_args()
+	self:set_output()
 	local args = string.format(
 		"%s",
 		FFMPEG
@@ -131,8 +136,7 @@ end
 function HandSaw:copy_clip()
 	-- tries to save a lossless copy of video's section
 	self.container_to = self.container_from
-	self.clip_name = string.format("%s-%.2f-%.2f.%s", self.name_prefix, self.edges.a, self.edges.b, self.container_to)
-	self.clip_path = path.join({ self.output_dir, self.clip_name })
+	self:set_output()
 	if path.file_exists(self.clip_path) then
 		self.exit_status.ok = false
 		self.exit_status.status = nil
