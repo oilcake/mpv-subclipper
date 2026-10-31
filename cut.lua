@@ -126,7 +126,7 @@ end
 
 -- helper function
 local function downscale_string(height)
-	return string.format("-filter:v scale=-1:%d", height)
+	return string.format("-filter:v scale=-2:%d", height)
 end
 
 --[[CONVERSION METHODS]]
